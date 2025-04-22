@@ -21,7 +21,7 @@ const Navigation = () => {
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
-            <Link to="/lessons" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/lessons/beginner" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
               <Book className="w-4 h-4" />
               <span>Lessons</span>
             </Link>
@@ -29,9 +29,9 @@ const Navigation = () => {
               <Layout className="w-4 h-4" />
               <span>Playground</span>
             </Link>
-            <Link to="/projects" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/roadmap" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
               <Zap className="w-4 h-4" />
-              <span>Projects</span>
+              <span>Roadmap</span>
             </Link>
           </nav>
         </div>

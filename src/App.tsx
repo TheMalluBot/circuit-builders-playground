@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import LessonsPage from "./pages/LessonsPage";
 import LessonPage from "./pages/LessonPage";
 import PlaygroundPage from "./pages/PlaygroundPage";
+import RoadmapPage from "./pages/RoadmapPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/lessons/:category" element={<LessonsPage />} />
             <Route path="/lessons/:slug" element={<LessonPage />} />
             <Route path="/playground" element={<PlaygroundPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
