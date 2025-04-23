@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +8,6 @@ import Index from "./pages/Index";
 import LessonsPage from "./pages/LessonsPage";
 import LessonPage from "./pages/LessonPage";
 import PlaygroundPage from "./pages/PlaygroundPage";
-import RoadmapPage from "./pages/RoadmapPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +24,7 @@ const App = () => (
             <Route path="/lessons/:category" element={<LessonsPage />} />
             <Route path="/lessons/:slug" element={<LessonPage />} />
             <Route path="/playground" element={<PlaygroundPage />} />
-            <Route path="/roadmap" element={<RoadmapPage />} />
+            {/* Removed the RoadmapPage route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
