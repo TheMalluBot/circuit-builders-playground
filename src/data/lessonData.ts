@@ -1,4 +1,3 @@
-
 export type LessonCategory = 'beginner' | 'intermediate' | 'advanced';
 
 export interface Lesson {
@@ -20,6 +19,18 @@ export interface Lesson {
 export interface LessonSection {
   title: string;
   content: string;
+  simulatorState?: string;
+  interactiveElements?: InteractiveElement[];
+}
+
+export interface InteractiveElement {
+  type: 'component-card' | 'animation' | 'challenge' | 'measurement';
+  id: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  symbol?: string;
+  details?: string;
 }
 
 export interface SimulationActivity {
@@ -28,61 +39,219 @@ export interface SimulationActivity {
   components: string[];
   instructions: string[];
   objectives: string[];
+  states?: {
+    [key: string]: {
+      components: string[];
+      connections?: string[][];
+      measurements?: {
+        type: string;
+        position: string;
+        value: string;
+      }[];
+    };
+  };
 }
 
 export const lessons: Lesson[] = [
   // Beginner Lessons
   {
     id: 1,
-    title: "Introduction to Circuits and Components",
-    description: "Learn the basics of electrical circuits and understand Ohm's Law.",
+    title: "Introduction to Basic Circuits",
+    description: "Learn the fundamentals of electrical circuits and build your first LED circuit.",
     image: "/placeholder.svg",
     duration: "30 min",
     difficulty: "beginner",
     completed: false,
-    slug: "intro-to-circuits",
+    slug: "intro-basic-circuits",
     category: "beginner",
     content: {
       sections: [
         {
           title: "Welcome to Circuit Building",
-          content: "Electrical circuits are the foundation of all modern electronics. They provide a path for electricity to flow and perform useful work. In this lesson, you'll learn about basic circuit components and how they work together."
+          content: "Welcome to your first lesson in circuit building! An electrical circuit is a complete path that allows electricity to flow from a power source, through components, and back to the source.\n\nCircuits are the foundation of all electronics, from simple flashlights to complex computers. In this lesson, you'll learn the basics of circuits and build your very first working LED circuit.\n\nAs you work through this lesson, you'll discover how electricity flows, how components work together, and how to create a functional circuit that lights up an LED.",
+          simulatorState: "empty"
         },
         {
-          title: "Component Explorer",
-          content: "Every circuit is built from components. The most basic circuit requires:\n\n- Power Source (Battery/Power Supply): Provides electrical energy\n- Conductive Path (Wires): Allows electricity to flow\n- Load (Resistor, LED, etc.): Uses the electrical energy\n- Control Element (Switch): Controls the flow of electricity"
+          title: "Meet the Components",
+          content: "Let's explore the basic components we'll use to build our first circuit. Click on each component to learn more about it:",
+          simulatorState: "components-showcase",
+          interactiveElements: [
+            {
+              type: "component-card",
+              id: "battery",
+              title: "Battery",
+              description: "The power source that provides electrical energy to the circuit.",
+              details: "Has positive (+) and negative (-) terminals. Creates voltage that pushes electrons through the circuit.",
+              image: "/placeholder.svg",
+              symbol: "/placeholder.svg"
+            },
+            {
+              type: "component-card",
+              id: "led",
+              title: "LED",
+              description: "Light Emitting Diode - converts electrical energy into light.",
+              details: "Has polarity (anode/cathode). Only allows current in one direction. Requires current limiting to prevent damage.",
+              image: "/placeholder.svg",
+              symbol: "/placeholder.svg"
+            },
+            {
+              type: "component-card",
+              id: "resistor",
+              title: "Resistor",
+              description: "Limits the flow of electrical current in a circuit.",
+              details: "Measured in ohms (Ω). Higher resistance = less current flow. Essential for protecting components from too much current.",
+              image: "/placeholder.svg",
+              symbol: "/placeholder.svg"
+            },
+            {
+              type: "component-card",
+              id: "switch",
+              title: "Switch",
+              description: "Controls the flow of electricity by creating an open or closed path.",
+              details: "In 'on' position, allows current to flow. In 'off' position, breaks the circuit path.",
+              image: "/placeholder.svg",
+              symbol: "/placeholder.svg"
+            },
+            {
+              type: "component-card",
+              id: "wires",
+              title: "Wires",
+              description: "Conductive paths that connect components together.",
+              details: "Allow electrons to flow between components. Create the complete circuit path.",
+              image: "/placeholder.svg",
+              symbol: "/placeholder.svg"
+            }
+          ]
         },
         {
-          title: "Circuit Fundamentals",
-          content: "To understand circuits, you need to know three fundamental concepts:\n\n- Voltage (V): The electrical pressure measured in volts (V)\n- Current (I): The flow of electricity measured in amperes (A)\n- Resistance (R): The opposition to current flow measured in ohms (Ω)\n\nThese three concepts are related by Ohm's Law: V = I × R"
+          title: "Building Your First Circuit",
+          content: "Now it's time to build your first circuit! We'll connect a battery to an LED with a resistor to create a simple light.\n\nFollow these steps in the simulator:\n\n1. Place the battery on the left side of the workspace\n2. Place the LED to the right of the battery\n3. Place the resistor between the battery and the LED\n4. Connect the positive (+) terminal of the battery to one end of the resistor\n5. Connect the other end of the resistor to the anode (longer leg) of the LED\n6. Connect the cathode (shorter leg) of the LED back to the negative (-) terminal of the battery\n\nAs you complete each step, watch for visual feedback in the simulator.",
+          simulatorState: "guided-build"
         },
         {
-          title: "Your First Circuit",
-          content: "Let's build a simple LED circuit. An LED (Light Emitting Diode) converts electrical energy into light. However, LEDs need current limitation to prevent damage. We'll connect a battery to an LED and observe what happens."
+          title: "Understanding Current Flow",
+          content: "Great job building your first circuit! Now let's understand how it works.\n\nElectricity flows in a complete loop, from the power source, through components, and back to the source. This loop is called a circuit.\n\nIn your LED circuit:\n\n- **Voltage** from the battery (measured in volts, V) creates electrical pressure that pushes electrons through the circuit\n- **Current** (measured in amperes or amps, A) flows from the battery's positive terminal through the resistor, through the LED, and back to the negative terminal\n- The **Resistor** limits the flow of current to protect the LED from damage\n- The **LED** converts electrical energy into light when current flows through it\n\nThe simulator now shows animated current flow. Notice how the electrons move through the complete circuit path.",
+          simulatorState: "complete-circuit",
+          interactiveElements: [
+            {
+              type: "animation",
+              id: "current-flow",
+              title: "Current Flow Animation"
+            },
+            {
+              type: "measurement",
+              id: "voltage-measurement",
+              title: "Voltage Measurement"
+            }
+          ]
         },
         {
-          title: "Knowledge Check",
-          content: "Test your understanding:\n\n1. What provides the electrical energy in a circuit?\n2. What happens if too much current flows through an LED?\n3. Which direction does conventional current flow?\n4. What does a switch do in a circuit?"
+          title: "Why We Need Resistors",
+          content: "You might wonder why we need a resistor in our LED circuit. Let's find out!\n\nLEDs are sensitive components that can be damaged by too much current. Without a resistor, the current would be too high and could burn out the LED instantly.\n\nThe resistor limits the current to a safe level for the LED. Using Ohm's Law (I = V/R), we can calculate the right resistor value:\n\n- If our battery is 9V and our LED has a forward voltage of 2V\n- The voltage across the resistor is 7V (9V - 2V)\n- If our LED needs 15mA (0.015A) of current\n- Then using Ohm's Law: R = V/I = 7V / 0.015A = 466.67Ω\n- So we would use a 470Ω resistor (the nearest standard value)\n\nThe simulator now shows a comparison of an LED with and without a proper resistor. See the difference!",
+          simulatorState: "resistor-demo",
+          interactiveElements: [
+            {
+              type: "animation",
+              id: "with-without-resistor",
+              title: "LEDs With and Without Resistors"
+            }
+          ]
         },
         {
-          title: "Next Steps",
-          content: "In our next lesson, we'll learn about resistors and how they help us control current in our circuits. We'll also dive deeper into Ohm's Law and see it in action."
+          title: "Practice Challenge",
+          content: "Now it's your turn to apply what you've learned! Your challenge is to modify the circuit by adding a switch to control the LED.\n\nIn the simulator:\n\n1. Add a switch to the circuit\n2. Place it between the battery and the resistor\n3. Connect the components correctly to create a working switch-controlled LED\n\nWhen done correctly, you should be able to turn the LED on and off using the switch. Give it a try!",
+          simulatorState: "challenge",
+          interactiveElements: [
+            {
+              type: "challenge",
+              id: "add-switch-challenge",
+              title: "Add a Switch Challenge"
+            }
+          ]
+        },
+        {
+          title: "What You've Learned",
+          content: "Congratulations on completing your first circuit lesson! Here's what you've learned:\n\n- The basic components of an electrical circuit\n- How to connect components to create a functional circuit\n- How current flows through a complete circuit path\n- Why resistors are essential for protecting sensitive components\n- How to use a switch to control a circuit\n\nNext up, we'll explore more about resistors and Ohm's Law, which will help you design more complex circuits. You might also try building a simple flashlight at home using what you've learned today!\n\nFeel free to experiment more with the circuit simulator or continue to the next lesson.",
+          simulatorState: "complete-challenge"
         }
       ],
       simulationActivity: {
         title: "Build Your First LED Circuit",
-        description: "Connect a battery to an LED to make it light up. Observe what happens when you connect it correctly and incorrectly.",
-        components: ["9V Battery", "LED", "Wires"],
+        description: "Connect a battery, resistor, and LED to create a simple light circuit.",
+        components: ["9V Battery", "LED", "470Ω Resistor", "Switch", "Wires"],
         instructions: [
-          "Drag wires to connect the positive terminal of the battery to the anode (longer leg) of the LED",
-          "Connect the cathode (shorter leg) of the LED to the negative terminal of the battery",
-          "Observe the LED lighting up when connected correctly"
+          "Drag components from the panel to the workspace",
+          "Connect the battery's positive terminal to the resistor",
+          "Connect the resistor to the LED's anode (longer leg)",
+          "Connect the LED's cathode (shorter leg) to the battery's negative terminal",
+          "For the challenge: add a switch between the battery and resistor"
         ],
         objectives: [
-          "Successfully light the LED",
-          "Understand polarity in a circuit",
-          "Observe what happens with incorrect connections"
-        ]
+          "Build a working LED circuit",
+          "Understand current flow direction",
+          "Learn the purpose of current-limiting resistors",
+          "Successfully add a switch to control the circuit"
+        ],
+        states: {
+          "empty": {
+            components: []
+          },
+          "components-showcase": {
+            components: ["battery", "led", "resistor", "switch", "wires"]
+          },
+          "guided-build": {
+            components: ["battery", "led", "resistor"],
+            connections: []
+          },
+          "complete-circuit": {
+            components: ["battery", "led", "resistor"],
+            connections: [
+              ["battery-positive", "resistor-start"],
+              ["resistor-end", "led-anode"],
+              ["led-cathode", "battery-negative"]
+            ],
+            measurements: [
+              {
+                type: "voltage",
+                position: "battery",
+                value: "9V"
+              },
+              {
+                type: "voltage",
+                position: "led",
+                value: "2V"
+              },
+              {
+                type: "current",
+                position: "circuit",
+                value: "15mA"
+              }
+            ]
+          },
+          "resistor-demo": {
+            components: ["battery", "led", "resistor", "led-no-resistor"],
+            connections: [
+              ["battery-positive", "resistor-start"],
+              ["resistor-end", "led-anode"],
+              ["led-cathode", "battery-negative"],
+              ["battery-positive", "led-no-resistor-anode"],
+              ["led-no-resistor-cathode", "battery-negative"]
+            ]
+          },
+          "challenge": {
+            components: ["battery", "led", "resistor", "switch"],
+            connections: []
+          },
+          "complete-challenge": {
+            components: ["battery", "led", "resistor", "switch"],
+            connections: [
+              ["battery-positive", "switch-1"],
+              ["switch-2", "resistor-start"],
+              ["resistor-end", "led-anode"],
+              ["led-cathode", "battery-negative"]
+            ]
+          }
+        }
       }
     }
   },

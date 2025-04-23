@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   ChevronLeft,
@@ -26,14 +26,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import CircuitComponent from '@/components/CircuitComponent';
+import CircuitSimulator from '@/components/CircuitSimulator';
 import { getLessonBySlug } from '@/data/lessonData';
 import { components } from '@/data/componentData';
+import { 
+  ComponentsGallery, 
+  RenderInteractiveElement 
+} from '@/components/InteractiveComponents';
 
 const LessonPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const lesson = getLessonBySlug(slug || '');
   const [activeTab, setActiveTab] = useState<'learn' | 'simulator'>('learn');
   const [activeSection, setActiveSection] = useState(0);
+  const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
+  const [challengeComplete, setChallengeComplete] = useState(false);
+  
+  // Reset highlighted component when section changes
+  useEffect(() => {
+    setHighlightedComponent(null);
+  }, [activeSection]);
   
   if (!lesson) {
     return (
@@ -96,6 +108,7 @@ const LessonPage = () => {
   const handleNextSection = () => {
     if (lesson.content?.sections && activeSection < lesson.content.sections.length - 1) {
       setActiveSection(activeSection + 1);
+      setChallengeComplete(false); // Reset challenge state when moving to next section
     }
   };
   
@@ -105,7 +118,49 @@ const LessonPage = () => {
     }
   };
   
+  const handleComponentSelect = (id: string) => {
+    setHighlightedComponent(id);
+  };
+  
+  const handleChallengeComplete = () => {
+    setChallengeComplete(true);
+  };
+  
   const simulationActivity = lesson.content?.simulationActivity;
+  
+  const renderSectionContent = () => {
+    if (!currentSection) return null;
+    
+    // Split content by paragraphs
+    const paragraphs = currentSection.content.split('\n\n');
+    
+    return (
+      <div className="prose max-w-none">
+        {paragraphs.map((paragraph, idx) => (
+          <p key={idx} className="text-muted-foreground mb-4">
+            {paragraph}
+          </p>
+        ))}
+        
+        {/* Render interactive elements if present */}
+        {currentSection.interactiveElements?.length && currentSection.interactiveElements[0].type === 'component-card' ? (
+          <ComponentsGallery 
+            components={currentSection.interactiveElements}
+            onSelect={handleComponentSelect}
+          />
+        ) : (
+          currentSection.interactiveElements?.map(element => (
+            <RenderInteractiveElement 
+              key={element.id} 
+              element={element}
+              onSelect={handleComponentSelect}
+              onComplete={handleChallengeComplete}
+            />
+          ))
+        )}
+      </div>
+    );
+  };
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -139,6 +194,16 @@ const LessonPage = () => {
                 </div>
               </div>
               
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm">{progress}% Complete</span>
+                    <span className="text-sm text-muted-foreground">{activeSection + 1}/{totalSections} Sections</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
+              </div>
+              
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-8">
                 <div className="border-b border-gray-200">
                   <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'learn' | 'simulator')}>
@@ -159,79 +224,40 @@ const LessonPage = () => {
                       </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="learn" className="m-0 p-6">
-                      {currentSection ? (
-                        <>
-                          <h2 className="text-xl font-medium mb-4">{currentSection.title}</h2>
-                          <div className="prose max-w-none">
-                            {currentSection.content.split('\n\n').map((paragraph, i) => (
-                              <p key={i} className="text-muted-foreground mb-4">
-                                {paragraph.includes('\n- ') ? (
-                                  <>
-                                    {paragraph.split('\n- ')[0]}
-                                    <ul className="list-disc pl-6 mt-2 space-y-1">
-                                      {paragraph.split('\n- ').slice(1).map((item, j) => (
-                                        <li key={j} className="text-muted-foreground">{item}</li>
-                                      ))}
-                                    </ul>
-                                  </>
-                                ) : (
-                                  paragraph
-                                )}
-                              </p>
-                            ))}
+                    <TabsContent value="learn" className="m-0">
+                      <div className="p-6 lg:flex lg:gap-6">
+                        <div className="lg:w-1/2 lg:pr-4 mb-6 lg:mb-0">
+                          <h2 className="text-xl font-medium mb-4">{currentSection?.title}</h2>
+                          {renderSectionContent()}
+                          
+                          <div className="flex justify-between mt-8">
+                            <Button 
+                              variant="outline" 
+                              onClick={handlePrevSection}
+                              disabled={!prevSection}
+                            >
+                              <ChevronLeft className="w-4 h-4 mr-2" />
+                              Previous
+                            </Button>
+                            
+                            <Button 
+                              onClick={handleNextSection}
+                              disabled={!nextSection || (currentSection?.interactiveElements?.some(el => el.type === 'challenge') && !challengeComplete)}
+                            >
+                              Next
+                              <ChevronRight className="w-4 h-4 ml-2" />
+                            </Button>
                           </div>
-                        </>
-                      ) : (
-                        <>
-                          <h2 className="text-xl font-medium mb-2">Lesson Content</h2>
-                          <p className="text-muted-foreground mb-6">
-                            {lesson.description} This is where the detailed lesson content would be displayed,
-                            with text, images, and interactive elements to help you learn about circuits.
-                          </p>
-                          
-                          <h3 className="text-lg font-medium mb-3">What is a Circuit?</h3>
-                          <p className="text-muted-foreground mb-4">
-                            An electrical circuit is a path in which electrons flow from a voltage or current source.
-                            The point where those electrons enter an electrical circuit is called the "source" of electrons.
-                            The point where the electrons leave an electrical circuit is called the "return" or "earth ground".
-                          </p>
-                          
-                          <div className="bg-gray-100 p-4 rounded-lg mb-6">
-                            <h4 className="font-medium mb-2">Components of a Basic Circuit</h4>
-                            <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                              <li>Power Source (Battery, Power Supply)</li>
-                              <li>Conductive Path (Wires, Traces)</li>
-                              <li>Load (Resistor, LED, Motor)</li>
-                              <li>Control Element (Switch, Transistor)</li>
-                            </ul>
-                          </div>
-                          
-                          <h3 className="text-lg font-medium mb-3">Key Concepts</h3>
-                          <p className="text-muted-foreground mb-4">
-                            Electricity always flows in a complete loop, from the power source, through the circuit, and back to the source.
-                            This is why a broken circuit (like an open switch) stops the flow of electricity.
-                          </p>
-                        </>
-                      )}
-                      
-                      <div className="flex justify-between mt-8">
-                        <Button 
-                          variant="outline" 
-                          onClick={handlePrevSection}
-                          disabled={!prevSection}
-                        >
-                          <ChevronLeft className="w-4 h-4 mr-2" />
-                          Previous
-                        </Button>
+                        </div>
                         
-                        <Button 
-                          onClick={handleNextSection}
-                          disabled={!nextSection}
-                        >
-                          Next
-                          <ChevronRight className="w-4 h-4 ml-2" />
-                        </Button>
+                        <div className="lg:w-1/2 h-[400px] lg:h-auto">
+                          <CircuitSimulator 
+                            simulatorState={currentSection?.simulatorState}
+                            simulationActivity={lesson.content?.simulationActivity}
+                            onHighlightComponent={handleComponentSelect}
+                            currentState={currentSection?.title || ''}
+                          />
+                        </div>
                       </div>
                     </TabsContent>
                     
@@ -254,6 +280,15 @@ const LessonPage = () => {
                               </div>
                             </div>
                             
+                            <div className="mb-4">
+                              <h4 className="font-medium mb-2">Instructions:</h4>
+                              <ol className="list-decimal list-inside text-muted-foreground space-y-1">
+                                {simulationActivity.instructions.map((instruction, index) => (
+                                  <li key={index}>{instruction}</li>
+                                ))}
+                              </ol>
+                            </div>
+
                             <div className="mb-4">
                               <h4 className="font-medium mb-2">Objectives:</h4>
                               <ul className="list-disc list-inside text-muted-foreground">
@@ -287,40 +322,11 @@ const LessonPage = () => {
                         
                         <div className="flex-1 relative">
                           <div className="simulator-grid h-full w-full p-4">
-                            {simulationActivity ? (
-                              <div className="h-full flex flex-col">
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                                  <h4 className="font-medium mb-2">Instructions:</h4>
-                                  <ol className="list-decimal list-inside text-muted-foreground space-y-2">
-                                    {simulationActivity.instructions.map((instruction, index) => (
-                                      <li key={index}>{instruction}</li>
-                                    ))}
-                                  </ol>
-                                </div>
-                                
-                                <div className="flex-1 flex items-center justify-center">
-                                  <div className="text-center">
-                                    <img src="/placeholder.svg" alt="Circuit" className="w-32 h-32 mx-auto mb-4 opacity-30" />
-                                    <p className="text-muted-foreground mb-3">Drag components to build your circuit</p>
-                                    <Button variant="outline" size="sm">
-                                      <PlayCircle className="w-4 h-4 mr-2" />
-                                      <span>Watch Tutorial</span>
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center h-full">
-                                <div className="text-center">
-                                  <img src="/placeholder.svg" alt="Circuit" className="w-32 h-32 mx-auto mb-4 opacity-30" />
-                                  <p className="text-muted-foreground mb-3">Drag components from the left panel to start building your circuit</p>
-                                  <Button variant="outline" size="sm">
-                                    <PlayCircle className="w-4 h-4 mr-2" />
-                                    <span>Watch Tutorial</span>
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
+                            <CircuitSimulator 
+                              simulatorState={currentSection?.simulatorState}
+                              simulationActivity={lesson.content?.simulationActivity}
+                              currentState="Simulator"
+                            />
                           </div>
                         </div>
                       </div>
@@ -382,15 +388,15 @@ const LessonPage = () => {
                     <div className="flex gap-2 items-start">
                       <List className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <h4 className="font-medium text-sm">Circuit Connections</h4>
-                        <p className="text-sm text-muted-foreground">Learn how to connect components correctly</p>
+                        <h4 className="font-medium text-sm">Current Flow</h4>
+                        <p className="text-sm text-muted-foreground">Learn how electricity moves through a circuit</p>
                       </div>
                     </div>
                     <div className="flex gap-2 items-start">
                       <Settings className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <h4 className="font-medium text-sm">Circuit Analysis</h4>
-                        <p className="text-sm text-muted-foreground">Techniques to understand circuit behavior</p>
+                        <h4 className="font-medium text-sm">LED Protection</h4>
+                        <p className="text-sm text-muted-foreground">Understand why resistors are essential</p>
                       </div>
                     </div>
                   </div>
