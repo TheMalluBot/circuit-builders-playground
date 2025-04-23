@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Rotate, AlertCircle, CheckCircle } from 'lucide-react';
+import { Play, RotateCcw, AlertCircle, CheckCircle } from 'lucide-react';
 import { SimulationActivity } from '@/data/lessonData';
 
 interface CircuitSimulatorProps {
