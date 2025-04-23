@@ -142,7 +142,7 @@ const CircuitSimulator: React.FC<CircuitSimulatorProps> = ({
             variant="outline"
             onClick={resetSimulation}
           >
-            <Rotate className="w-4 h-4 mr-1" />
+            <RotateCcw className="w-4 h-4 mr-1" />
             Reset
           </Button>
         </div>
