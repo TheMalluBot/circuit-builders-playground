@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LessonsManagement from "./pages/admin/LessonsManagement";
+import ContentEditor from "./pages/admin/ContentEditor";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="lessons" element={<LessonsManagement />} />
+              <Route path="content-editor" element={<ContentEditor />} />
               <Route path="simulations" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
               <Route path="learning-paths" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
               <Route path="media" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
