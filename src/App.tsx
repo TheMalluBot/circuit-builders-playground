@@ -1,14 +1,20 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import React from "react"; // Added React import
+import React from "react"; 
 import Index from "./pages/Index";
 import LessonsPage from "./pages/LessonsPage";
 import LessonPage from "./pages/LessonPage";
 import PlaygroundPage from "./pages/PlaygroundPage";
 import NotFound from "./pages/NotFound";
+
+// Admin imports
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import LessonsManagement from "./pages/admin/LessonsManagement";
 
 const queryClient = new QueryClient();
 
@@ -20,11 +26,25 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/lessons/:category" element={<LessonsPage />} />
             <Route path="/lessons/:slug" element={<LessonPage />} />
             <Route path="/playground" element={<PlaygroundPage />} />
-            {/* Removed the RoadmapPage route */}
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="lessons" element={<LessonsManagement />} />
+              <Route path="simulations" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+              <Route path="learning-paths" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+              <Route path="media" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+              <Route path="users" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+              <Route path="reports" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+              <Route path="settings" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+              <Route path="docs" element={<LessonsManagement />} /> {/* Placeholder - same component for now */}
+            </Route>
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

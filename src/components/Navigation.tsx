@@ -7,7 +7,8 @@ import {
   Layout, 
   Zap, 
   Search, 
-  User
+  User,
+  Settings
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -29,10 +30,6 @@ const Navigation = () => {
               <Layout className="w-4 h-4" />
               <span>Playground</span>
             </Link>
-            <Link to="/roadmap" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-              <Zap className="w-4 h-4" />
-              <span>Roadmap</span>
-            </Link>
           </nav>
         </div>
         
@@ -48,6 +45,12 @@ const Navigation = () => {
           <Button variant="ghost" size="icon" className="rounded-full">
             <User className="h-5 w-5" />
             <span className="sr-only">Account</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Link to="/admin">
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">Admin</span>
+            </Link>
           </Button>
           <Button variant="default">Sign Up</Button>
         </div>
