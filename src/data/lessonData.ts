@@ -24,13 +24,15 @@ export interface LessonSection {
 }
 
 export interface InteractiveElement {
-  type: 'component-card' | 'animation' | 'challenge' | 'measurement';
+  type: 'component-card' | 'animation' | 'challenge' | 'measurement' | 'quiz' | 'calculator' | 'slider' | 'drag-drop';
   id: string;
   title?: string;
   description?: string;
   image?: string;
   symbol?: string;
   details?: string;
+  options?: any[];
+  correctAnswer?: string | number | boolean;
 }
 
 export interface SimulationActivity {
@@ -53,526 +55,291 @@ export interface SimulationActivity {
 }
 
 export const lessons: Lesson[] = [
-  // Beginner Lessons
+  // Getting Started with Electronics
   {
     id: 1,
-    title: "Introduction to Basic Circuits",
-    description: "Learn the fundamentals of electrical circuits and build your first LED circuit.",
+    title: "Getting Started with Electronics",
+    description: "Learn the fundamentals of electronics and get familiar with the CircuitBuilders platform.",
     image: "/placeholder.svg",
-    duration: "30 min",
+    duration: "25 min",
     difficulty: "beginner",
     completed: false,
-    slug: "intro-basic-circuits",
+    slug: "getting-started",
     category: "beginner",
     content: {
       sections: [
         {
-          title: "Welcome to Circuit Building",
-          content: "Welcome to your first lesson in circuit building! An electrical circuit is a complete path that allows electricity to flow from a power source, through components, and back to the source.\n\nCircuits are the foundation of all electronics, from simple flashlights to complex computers. In this lesson, you'll learn the basics of circuits and build your very first working LED circuit.\n\nAs you work through this lesson, you'll discover how electricity flows, how components work together, and how to create a functional circuit that lights up an LED.",
-          simulatorState: "empty"
+          title: "Introduction to CircuitBuilders",
+          content: "Welcome to CircuitBuilders! This platform is designed to help you learn electronics through interactive lessons and simulations. Whether you're a complete beginner or looking to brush up on your skills, our step-by-step approach will guide you through the fascinating world of electronics.\n\nIn this introductory lesson, we'll cover the basics of electrical concepts, show you how to use our circuit simulator, and provide important safety guidelines for when you're ready to build real circuits."
         },
         {
-          title: "Meet the Components",
-          content: "Let's explore the basic components we'll use to build our first circuit. Click on each component to learn more about it:",
-          simulatorState: "components-showcase",
+          title: "Basic Electrical Concepts",
+          content: "Before we dive into building circuits, let's understand some fundamental concepts:\n\n**Electricity** is the flow of electric charge (electrons).\n\n**Voltage** is the electrical pressure that pushes electrons through a circuit, measured in volts (V).\n\n**Current** is the rate at which electrons flow, measured in amperes or amps (A).\n\n**Resistance** is how much a material opposes the flow of electrons, measured in ohms (Ω).\n\nThese concepts work together according to Ohm's Law: V = I × R (Voltage = Current × Resistance)."
+        },
+        {
+          title: "Circuit Simulator Tutorial",
+          content: "The CircuitBuilders simulator allows you to create and test virtual circuits before building them with real components. Here's how to use it:\n\n1. **Component Panel**: On the left side, you'll find various components you can drag onto the workspace.\n\n2. **Workspace**: The main area where you build your circuit by placing and connecting components.\n\n3. **Toolbar**: Contains simulation controls like Run, Pause, and Reset.\n\n4. **Measurement Tools**: Use these to measure voltage, current, and other properties in your circuit.\n\nTry dragging a few components onto the workspace and connecting them to get comfortable with the interface."
+        },
+        {
+          title: "Safety Guidelines",
+          content: "When you're ready to work with real electronic components, safety is paramount:\n\n- Always disconnect power sources before working on circuits\n- Use insulated tools when working with live circuits\n- Avoid wearing metal jewelry when working with electronics\n- Work in a dry environment to prevent electrical hazards\n- Be cautious with capacitors as they can store charge even when disconnected\n- Keep components and tools away from children and pets\n- Have a fire extinguisher nearby for emergencies\n\nRemember: Most beginner circuits use low voltages (3-12V) which are generally safe, but it's important to develop good safety habits from the start."
+        }
+      ]
+    }
+  },
+  
+  // Understanding Circuit Basics
+  {
+    id: 2,
+    title: "Understanding Circuit Basics",
+    description: "Learn the fundamental concepts of electrical circuits through interactive demonstrations and hands-on simulation.",
+    image: "/placeholder.svg",
+    duration: "30-45 min",
+    difficulty: "beginner",
+    completed: false,
+    slug: "circuit-basics",
+    category: "beginner",
+    content: {
+      sections: [
+        {
+          title: "What is a Circuit?",
+          content: "An electrical circuit is a complete path that allows electricity to flow from a power source, through components, and back to the source.\n\nEvery circuit needs three basic elements:\n\n1. **Power Source**: Provides the electrical energy (like a battery or power supply)\n2. **Conductors**: Allow electricity to flow (typically wires)\n3. **Load**: Uses the electrical energy (like a light bulb, motor, or speaker)\n\nThink of electricity like water flowing through pipes. The battery is like a water pump creating pressure, wires are like pipes that direct the flow, and components like LEDs are like water wheels that use the energy.\n\nCircuits are all around us - in smartphones, computers, household appliances, and vehicles. Even the simplest flashlight contains a circuit with a battery, switch, and light bulb.",
           interactiveElements: [
             {
-              type: "component-card",
-              id: "battery",
-              title: "Battery",
-              description: "The power source that provides electrical energy to the circuit.",
-              details: "Has positive (+) and negative (-) terminals. Creates voltage that pushes electrons through the circuit.",
-              image: "/placeholder.svg",
-              symbol: "/placeholder.svg"
-            },
-            {
-              type: "component-card",
-              id: "led",
-              title: "LED",
-              description: "Light Emitting Diode - converts electrical energy into light.",
-              details: "Has polarity (anode/cathode). Only allows current in one direction. Requires current limiting to prevent damage.",
-              image: "/placeholder.svg",
-              symbol: "/placeholder.svg"
-            },
-            {
-              type: "component-card",
-              id: "resistor",
-              title: "Resistor",
-              description: "Limits the flow of electrical current in a circuit.",
-              details: "Measured in ohms (Ω). Higher resistance = less current flow. Essential for protecting components from too much current.",
-              image: "/placeholder.svg",
-              symbol: "/placeholder.svg"
-            },
-            {
-              type: "component-card",
-              id: "switch",
-              title: "Switch",
-              description: "Controls the flow of electricity by creating an open or closed path.",
-              details: "In 'on' position, allows current to flow. In 'off' position, breaks the circuit path.",
-              image: "/placeholder.svg",
-              symbol: "/placeholder.svg"
-            },
-            {
-              type: "component-card",
-              id: "wires",
-              title: "Wires",
-              description: "Conductive paths that connect components together.",
-              details: "Allow electrons to flow between components. Create the complete circuit path.",
-              image: "/placeholder.svg",
-              symbol: "/placeholder.svg"
+              type: "drag-drop",
+              id: "circuit-components-match",
+              title: "Match Circuit Components",
+              description: "Drag each circuit element to its correct description",
+              options: [
+                { item: "Battery", matches: "Provides electrical energy" },
+                { item: "Wire", matches: "Conducts electricity between components" },
+                { item: "Resistor", matches: "Limits current flow" },
+                { item: "Switch", matches: "Controls whether circuit is open or closed" },
+                { item: "LED", matches: "Converts electrical energy to light" }
+              ]
             }
           ]
         },
         {
-          title: "Building Your First Circuit",
-          content: "Now it's time to build your first circuit! We'll connect a battery to an LED with a resistor to create a simple light.\n\nFollow these steps in the simulator:\n\n1. Place the battery on the left side of the workspace\n2. Place the LED to the right of the battery\n3. Place the resistor between the battery and the LED\n4. Connect the positive (+) terminal of the battery to one end of the resistor\n5. Connect the other end of the resistor to the anode (longer leg) of the LED\n6. Connect the cathode (shorter leg) of the LED back to the negative (-) terminal of the battery\n\nAs you complete each step, watch for visual feedback in the simulator.",
-          simulatorState: "guided-build"
-        },
-        {
-          title: "Understanding Current Flow",
-          content: "Great job building your first circuit! Now let's understand how it works.\n\nElectricity flows in a complete loop, from the power source, through components, and back to the source. This loop is called a circuit.\n\nIn your LED circuit:\n\n- **Voltage** from the battery (measured in volts, V) creates electrical pressure that pushes electrons through the circuit\n- **Current** (measured in amperes or amps, A) flows from the battery's positive terminal through the resistor, through the LED, and back to the negative terminal\n- The **Resistor** limits the flow of current to protect the LED from damage\n- The **LED** converts electrical energy into light when current flows through it\n\nThe simulator now shows animated current flow. Notice how the electrons move through the complete circuit path.",
-          simulatorState: "complete-circuit",
+          title: "Voltage, Current, and Resistance",
+          content: "Let's explore the three fundamental properties of any electrical circuit:\n\n**Voltage (V)** is the electrical pressure or force that pushes electrons through a circuit. It's measured in volts (V). Think of voltage like the pressure in a water pipe.\n\n**Current (I)** is the rate at which electrons flow through a circuit. It's measured in amperes or amps (A). Think of current as the amount of water flowing through a pipe per second.\n\n**Resistance (R)** is how much a material opposes the flow of electricity. It's measured in ohms (Ω). Think of resistance like a narrow section in a pipe that restricts water flow.\n\nThese three properties are related by Ohm's Law: V = I × R\n\nThis means:\n- If voltage increases (with the same resistance), current increases\n- If resistance increases (with the same voltage), current decreases\n\nCommon values you'll encounter:\n- Batteries: 1.5V (AA/AAA), 9V\n- LEDs: 20mA (0.020A) typical current\n- Resistors: 220Ω, 1kΩ (1,000Ω), 10kΩ (10,000Ω)",
           interactiveElements: [
             {
-              type: "animation",
-              id: "current-flow",
-              title: "Current Flow Animation"
+              type: "slider",
+              id: "ohms-law-interactive",
+              title: "Ohm's Law Interactive",
+              description: "Adjust voltage and resistance to see how current changes"
             },
             {
-              type: "measurement",
-              id: "voltage-measurement",
-              title: "Voltage Measurement"
+              type: "calculator",
+              id: "ohms-law-calculator",
+              title: "Ohm's Law Calculator",
+              description: "Calculate the unknown value given the other two"
             }
           ]
         },
         {
-          title: "Why We Need Resistors",
-          content: "You might wonder why we need a resistor in our LED circuit. Let's find out!\n\nLEDs are sensitive components that can be damaged by too much current. Without a resistor, the current would be too high and could burn out the LED instantly.\n\nThe resistor limits the current to a safe level for the LED. Using Ohm's Law (I = V/R), we can calculate the right resistor value:\n\n- If our battery is 9V and our LED has a forward voltage of 2V\n- The voltage across the resistor is 7V (9V - 2V)\n- If our LED needs 15mA (0.015A) of current\n- Then using Ohm's Law: R = V/I = 7V / 0.015A = 466.67Ω\n- So we would use a 470Ω resistor (the nearest standard value)\n\nThe simulator now shows a comparison of an LED with and without a proper resistor. See the difference!",
-          simulatorState: "resistor-demo",
+          title: "Series vs. Parallel Circuits",
+          content: "There are two primary ways to connect components in a circuit: in series or in parallel.\n\n**Series Circuits:**\n- Components are connected end-to-end in a single loop\n- The same current flows through all components\n- Voltage is divided among components\n- If one component fails, the entire circuit stops working\n- Example: Old-fashioned Christmas lights where one burnt bulb breaks the whole string\n\n**Parallel Circuits:**\n- Components are connected across common points\n- Voltage is the same across all components\n- Current is divided among different paths\n- If one component fails, others continue to work\n- Example: Home electrical outlets (one appliance can fail while others keep working)\n\nComparing the two configurations:\n\n| Aspect | Series | Parallel |\n|--------|--------|----------|\n| Current | Same through all parts | Divides between paths |\n| Voltage | Divides across components | Same across all branches |\n| Resistance | Rtotal = R1 + R2 + R3... | 1/Rtotal = 1/R1 + 1/R2 + 1/R3... |\n| If one component fails open | Entire circuit fails | Only that branch fails |\n| Application | Current-sensitive devices | Voltage-sensitive devices |",
           interactiveElements: [
             {
-              type: "animation",
-              id: "with-without-resistor",
-              title: "LEDs With and Without Resistors"
+              type: "quiz",
+              id: "circuit-type-quiz",
+              title: "Circuit Type Identification",
+              description: "Look at each circuit diagram and identify whether it's series, parallel, or mixed",
+              options: [
+                { image: "/placeholder.svg", answer: "series" },
+                { image: "/placeholder.svg", answer: "parallel" },
+                { image: "/placeholder.svg", answer: "mixed" },
+                { image: "/placeholder.svg", answer: "parallel" }
+              ]
             }
           ]
         },
         {
-          title: "Practice Challenge",
-          content: "Now it's your turn to apply what you've learned! Your challenge is to modify the circuit by adding a switch to control the LED.\n\nIn the simulator:\n\n1. Add a switch to the circuit\n2. Place it between the battery and the resistor\n3. Connect the components correctly to create a working switch-controlled LED\n\nWhen done correctly, you should be able to turn the LED on and off using the switch. Give it a try!",
-          simulatorState: "challenge",
+          title: "Interactive Basic Circuit Simulation",
+          content: "Now it's time to build your first circuit! Follow the instructions on the right to create a simple LED circuit with a battery, resistor, and LED.\n\nIn this exercise, you'll:\n1. Place a 9V battery on the workspace\n2. Add a 220Ω resistor to limit current\n3. Add an LED (paying attention to its polarity)\n4. Connect the components correctly\n5. Run the simulation to see the LED light up\n6. Measure voltage at different points\n7. Experiment with different resistor values\n\nThis hands-on experience will help you understand how current flows through a circuit and how each component plays an important role.",
+          simulatorState: "basic-led-circuit"
+        },
+        {
+          title: "How This Circuit Works",
+          content: "The circuit you just built demonstrates the fundamental principles of electricity and electronic components working together.\n\n**Current Flow:**\nWhen you complete the circuit, electrons flow from the negative terminal of the battery, through the wires, through the LED, through the resistor, and back to the positive terminal of the battery. This creates a closed loop that allows continuous current flow.\n\n**Role of Each Component:**\n\n**Battery**: The 9V battery serves as our power source. It creates an electrical potential difference (voltage) that pushes electrons through the circuit. The battery has a positive terminal (anode) and a negative terminal (cathode).\n\n**Resistor**: The 220Ω resistor limits the current flowing through the circuit. Without this resistor, too much current would flow through the LED, causing it to burn out immediately. The resistor creates a voltage drop according to Ohm's Law (V = I × R).\n\n**LED (Light Emitting Diode)**: The LED converts electrical energy into light. It is a semiconductor device that only allows current to flow in one direction (from anode to cathode). When current passes through the LED, electrons release energy in the form of photons (light).\n\n**Wires**: The wires provide a low-resistance path for current to flow between components.\n\n**Voltage Distribution:**\nIn this simple series circuit, the voltage from the battery (9V) is distributed across the components:\n- LED voltage drop: approximately 2V (depends on LED color)\n- Resistor voltage drop: approximately 7V\n- Total: 9V\n\n**Current Calculation:**\nUsing Ohm's Law, we can calculate the current flowing in the circuit:\n- Voltage across resistor = 7V\n- Resistance = 220Ω\n- Current = V/R = 7V/220Ω = 0.032A or 32mA\n\nThis current level is safe for most standard LEDs, which typically have a maximum current rating of 20-30mA.\n\n**What If Something Goes Wrong?**\n\n**LED Doesn't Light**: Check polarity! LEDs only work when connected in the correct direction. The longer leg is the anode (+) and should connect to the resistor.\n\n**LED Burns Out Quickly**: The resistor value may be too small. A smaller resistance allows more current to flow, potentially exceeding the LED's maximum rating.\n\n**Dim Light**: The resistor value may be too large, limiting the current too much. Try a smaller resistance value for a brighter light.\n\n**Try Experimenting!**\n- Change the resistor to see how it affects brightness\n- Measure the voltage at different points in the circuit\n- Try adding a switch to control the circuit\n- Connect two LEDs in series or parallel and observe the differences"
+        },
+        {
+          title: "Circuit Practice Exercises",
+          content: "Now that you understand the basics, try these progressively challenging circuit exercises:\n\n**Exercise 1: Add a Switch**\nAdd a switch to your LED circuit so you can control when it turns on and off. Place the switch between the battery and the resistor.\n\n**Exercise 2: Parallel LEDs**\nCreate a circuit with two LEDs connected in parallel, each with its own resistor. Notice how both LEDs receive the full battery voltage.\n\n**Exercise 3: Voltage Divider**\nBuild a voltage divider using two resistors (1kΩ and 10kΩ). Measure the voltage at the midpoint between the resistors. Can you predict what it will be before measuring?",
+          simulatorState: "circuit-exercises",
           interactiveElements: [
             {
               type: "challenge",
-              id: "add-switch-challenge",
-              title: "Add a Switch Challenge"
+              id: "switch-challenge",
+              title: "Switch Control Challenge",
+              description: "Add a switch to control the LED circuit"
+            },
+            {
+              type: "challenge",
+              id: "parallel-leds-challenge",
+              title: "Parallel LEDs Challenge",
+              description: "Build a circuit with two LEDs in parallel"
+            },
+            {
+              type: "challenge",
+              id: "voltage-divider-challenge",
+              title: "Voltage Divider Challenge",
+              description: "Create a voltage divider and predict the output"
             }
           ]
-        },
-        {
-          title: "What You've Learned",
-          content: "Congratulations on completing your first circuit lesson! Here's what you've learned:\n\n- The basic components of an electrical circuit\n- How to connect components to create a functional circuit\n- How current flows through a complete circuit path\n- Why resistors are essential for protecting sensitive components\n- How to use a switch to control a circuit\n\nNext up, we'll explore more about resistors and Ohm's Law, which will help you design more complex circuits. You might also try building a simple flashlight at home using what you've learned today!\n\nFeel free to experiment more with the circuit simulator or continue to the next lesson.",
-          simulatorState: "complete-challenge"
         }
       ],
       simulationActivity: {
-        title: "Build Your First LED Circuit",
-        description: "Connect a battery, resistor, and LED to create a simple light circuit.",
-        components: ["9V Battery", "LED", "470Ω Resistor", "Switch", "Wires"],
+        title: "Basic LED Circuit",
+        description: "Build a simple LED circuit with a battery, resistor, and LED",
+        components: ["9V Battery", "220Ω Resistor", "1kΩ Resistor", "10kΩ Resistor", "LED", "Switch", "Wires", "Multimeter"],
         instructions: [
-          "Drag components from the panel to the workspace",
-          "Connect the battery's positive terminal to the resistor",
-          "Connect the resistor to the LED's anode (longer leg)",
-          "Connect the LED's cathode (shorter leg) to the battery's negative terminal",
-          "For the challenge: add a switch between the battery and resistor"
+          "Place the 9V battery on the left side of the workspace",
+          "Place the 220Ω resistor to the right of the battery",
+          "Place the LED to the right of the resistor, ensuring correct polarity",
+          "Connect the battery's positive terminal to one end of the resistor",
+          "Connect the other end of the resistor to the anode (longer leg) of the LED",
+          "Connect the cathode (shorter leg) of the LED back to the negative terminal of the battery",
+          "Run the simulation to see the LED light up",
+          "Use the multimeter to measure voltage across different components"
         ],
         objectives: [
           "Build a working LED circuit",
-          "Understand current flow direction",
-          "Learn the purpose of current-limiting resistors",
-          "Successfully add a switch to control the circuit"
+          "Understand the function of each component",
+          "Measure voltage and current in the circuit",
+          "Experiment with different resistor values",
+          "Complete the practice exercises"
         ],
         states: {
-          "empty": {
-            components: []
-          },
-          "components-showcase": {
-            components: ["battery", "led", "resistor", "switch", "wires"]
-          },
-          "guided-build": {
-            components: ["battery", "led", "resistor"],
+          "basic-led-circuit": {
+            components: ["battery", "resistor-220", "led"],
             connections: []
           },
-          "complete-circuit": {
-            components: ["battery", "led", "resistor"],
-            connections: [
-              ["battery-positive", "resistor-start"],
-              ["resistor-end", "led-anode"],
-              ["led-cathode", "battery-negative"]
-            ],
-            measurements: [
-              {
-                type: "voltage",
-                position: "battery",
-                value: "9V"
-              },
-              {
-                type: "voltage",
-                position: "led",
-                value: "2V"
-              },
-              {
-                type: "current",
-                position: "circuit",
-                value: "15mA"
-              }
-            ]
-          },
-          "resistor-demo": {
-            components: ["battery", "led", "resistor", "led-no-resistor"],
-            connections: [
-              ["battery-positive", "resistor-start"],
-              ["resistor-end", "led-anode"],
-              ["led-cathode", "battery-negative"],
-              ["battery-positive", "led-no-resistor-anode"],
-              ["led-no-resistor-cathode", "battery-negative"]
-            ]
-          },
-          "challenge": {
-            components: ["battery", "led", "resistor", "switch"],
+          "circuit-exercises": {
+            components: ["battery", "resistor-220", "resistor-1k", "resistor-10k", "led", "led-2", "switch"],
             connections: []
-          },
-          "complete-challenge": {
-            components: ["battery", "led", "resistor", "switch"],
-            connections: [
-              ["battery-positive", "switch-1"],
-              ["switch-2", "resistor-start"],
-              ["resistor-end", "led-anode"],
-              ["led-cathode", "battery-negative"]
-            ]
           }
         }
       }
     }
   },
-  {
-    id: 2,
-    title: "Resistors and Ohm's Law",
-    description: "Understand the difference between series and parallel connections.",
-    image: "/placeholder.svg",
-    duration: "45 min",
-    difficulty: "beginner",
-    completed: false,
-    slug: "resistors-ohms-law",
-    category: "beginner",
-    content: {
-      sections: [
-        {
-          title: "Introduction to Resistors",
-          content: "Resistors are fundamental components that limit the flow of current in a circuit. They convert electrical energy into heat and are essential for protecting sensitive components like LEDs. Resistors are color-coded to indicate their value in ohms (Ω)."
-        },
-        {
-          title: "Understanding Ohm's Law",
-          content: "Ohm's Law is the relationship between voltage (V), current (I), and resistance (R): V = I × R. This fundamental equation allows us to calculate any one of these values if we know the other two. For example, if we know the voltage and resistance, we can calculate the current: I = V/R."
-        },
-        {
-          title: "LED Circuits with Resistors",
-          content: "LEDs require a resistor to limit current and prevent damage. To calculate the appropriate resistor value, you need to know:\n\n- Supply voltage (V)\n- LED forward voltage (Vf)\n- Desired LED current (typically 15-20mA)\n\nThe formula is: R = (V - Vf) / I"
-        },
-        {
-          title: "Resistor Calculation Exercise",
-          content: "Let's calculate a resistor value for a red LED with:\n- Supply voltage: 9V\n- LED forward voltage: 2V\n- Desired current: 15mA\n\nR = (9V - 2V) / 0.015A = 7V / 0.015A = 467Ω\n\nSince 467Ω is not a standard value, we would typically choose 470Ω."
-        },
-        {
-          title: "Practical Applications",
-          content: "Resistors are used in countless applications:\n\n- Current limiting for LEDs and other components\n- Voltage dividers to create different voltage levels\n- Pull-up and pull-down resistors in digital circuits\n- Timing elements when paired with capacitors"
-        },
-        {
-          title: "Advanced Concepts Preview",
-          content: "In future lessons, we'll explore:\n\n- Voltage dividers using resistors\n- Series and parallel resistor combinations\n- Variable resistors (potentiometers) for adjustable circuits"
-        }
-      ],
-      simulationActivity: {
-        title: "Interactive Ohm's Law Circuit",
-        description: "Experiment with resistor values in an LED circuit and observe how current and brightness change.",
-        components: ["9V Battery", "Variable Resistor (100Ω to 1kΩ)", "LED", "Ammeter", "Voltmeter", "Wires"],
-        instructions: [
-          "Observe the pre-built circuit with a battery, resistor, and LED",
-          "Adjust the resistor value using the slider",
-          "Monitor the current and voltage readings",
-          "Notice how LED brightness changes with different current levels"
-        ],
-        objectives: [
-          "Find the minimum safe resistor value",
-          "Calculate the expected current at different resistor values",
-          "Understand the relationship between resistance and LED brightness"
-        ]
-      }
-    }
-  },
+  
+  // Essential Electronic Components
   {
     id: 3,
-    title: "Series and Parallel Circuits",
-    description: "Learn how to analyze simple circuits using Kirchhoff's laws.",
+    title: "Essential Electronic Components",
+    description: "Learn about fundamental electronic components including resistors, capacitors, LEDs, and switches.",
     image: "/placeholder.svg",
     duration: "40 min",
     difficulty: "beginner",
     completed: false,
-    slug: "series-parallel-circuits",
+    slug: "essential-components",
     category: "beginner",
     content: {
       sections: [
         {
-          title: "Circuit Configurations",
-          content: "There are two fundamental ways to connect components in a circuit: series and parallel. Understanding these configurations is essential for circuit design and analysis."
+          title: "Resistors: Function and Color Codes",
+          content: "Resistors are fundamental components that limit current flow in a circuit. They convert electrical energy into heat by providing resistance to the flow of electrons.\n\nResistors come in various resistance values, measured in ohms (Ω). Common values range from a few ohms to millions of ohms (megaohms).\n\nMost resistors use a color code system to indicate their resistance value and tolerance. The color bands are read from left to right:\n- First band: First digit\n- Second band: Second digit\n- Third band: Multiplier\n- Fourth band: Tolerance\n\nFor example, a resistor with bands Brown, Black, Red, Gold has a value of 1,000Ω (1kΩ) with 5% tolerance."
         },
         {
-          title: "Series Circuits",
-          content: "In a series circuit, components are connected end-to-end in a single path. Key characteristics:\n\n- Same current flows through all components\n- Voltage is divided across components\n- Total resistance is the sum of individual resistances (Rtotal = R1 + R2 + R3...)\n- If one component fails open, the entire circuit stops working"
+          title: "Capacitors: Types and Functions",
+          content: "Capacitors store electrical energy in an electric field. Unlike resistors that impede current, capacitors temporarily store and release charge.\n\nCapacitance is measured in farads (F), though most capacitors use smaller units like microfarads (μF) or picofarads (pF).\n\nCommon capacitor types include:\n- Ceramic: Small values, non-polarized, stable\n- Electrolytic: Larger values, polarized (+ and - terminals matter)\n- Tantalum: High capacity, stable, polarized\n- Film: Precise values, good for timing circuits\n\nCapacitors serve many functions in circuits: power supply filtering, coupling and decoupling signals, timing elements, and energy storage."
         },
         {
-          title: "Parallel Circuits",
-          content: "In a parallel circuit, components are connected across common points, creating multiple paths. Key characteristics:\n\n- Same voltage across all branches\n- Current divides between parallel paths\n- Total resistance decreases with more parallel paths (1/Rtotal = 1/R1 + 1/R2 + 1/R3...)\n- If one component fails open, other branches continue to work"
+          title: "LEDs and Diodes",
+          content: "Diodes are electronic components that allow current to flow in only one direction. They have two terminals: an anode (+) and a cathode (-). Current can flow from anode to cathode, but not in reverse.\n\nLEDs (Light Emitting Diodes) are special diodes that emit light when current flows through them. They come in various colors, sizes, and brightness levels.\n\nKey points about LEDs:\n- They have polarity - they must be connected in the correct direction\n- The longer lead is usually the anode (+), the shorter lead is the cathode (-)\n- They require current-limiting resistors to prevent damage\n- Different colors have different forward voltage drops (red: ~1.8V, blue: ~3.0V)"
         },
         {
-          title: "Comparing Series and Parallel",
-          content: "Series and parallel configurations have different advantages:\n\n- Series: Simple to wire, predictable current, good for current-sensitive applications\n- Parallel: Maintains voltage across components, provides redundancy, allows different currents through different branches"
+          title: "Switches and Buttons",
+          content: "Switches and buttons control the flow of electricity by creating an open or closed path in a circuit.\n\nCommon switch types include:\n- Toggle switches: Maintain their position (on/off)\n- Push buttons: Momentary contact only when pressed\n- DIP switches: Multiple tiny switches in one package\n- Slide switches: Slide mechanism for on/off\n\nSwitches are described by their poles and throws:\n- SPST (Single Pole, Single Throw): One input, one output, on/off\n- SPDT (Single Pole, Double Throw): One input, two possible outputs\n- DPDT (Double Pole, Double Throw): Two separate circuits controlled simultaneously"
         },
         {
-          title: "Mixed Circuits",
-          content: "Most real-world circuits combine both series and parallel elements. Analysis requires identifying which components are in series and which are in parallel, then applying the appropriate rules to each section."
-        },
-        {
-          title: "Knowledge Assessment",
-          content: "Check your understanding:\n\n1. What happens to current in a series circuit if you add more resistors?\n2. What happens to total resistance in a parallel circuit if you add more resistors?\n3. In which configuration would adding a second light bulb make all bulbs dimmer?\n4. How does battery life compare between series and parallel configurations of the same components?"
+          title: "Interactive Component Testing Lab",
+          content: "In this interactive lab, you can test different electronic components and observe how they behave in various circuits.\n\nExperiment with:\n- Different resistor values and observe current changes\n- Capacitor charging and discharging cycles\n- LEDs of various colors with appropriate resistors\n- Different switch configurations controlling multiple components\n\nThe simulator provides measurements of voltage, current, and other parameters to help you understand component behavior.",
+          simulatorState: "component-testing"
         }
-      ],
-      simulationActivity: {
-        title: "Series vs. Parallel Exploration",
-        description: "Compare the behavior of series and parallel circuits with identical components.",
-        components: ["Battery", "Resistors (3)", "LEDs (3)", "Ammeters", "Voltmeters", "Switches", "Wires"],
-        instructions: [
-          "Examine both the series and parallel circuits",
-          "Measure voltage across each component in both configurations",
-          "Measure current through each component in both configurations",
-          "Try opening one branch in each circuit and observe what happens"
-        ],
-        objectives: [
-          "Verify current behavior in series and parallel circuits",
-          "Verify voltage behavior in series and parallel circuits",
-          "Compare brightness of LEDs in different configurations",
-          "Understand failure modes in different configurations"
-        ]
-      }
+      ]
     }
   },
+  
+  // Building Your First Projects
   {
     id: 4,
-    title: "Building a Basic LED Flashlight",
-    description: "Explore different types of sensors and how to use them in circuits.",
-    image: "/placeholder.svg",
-    duration: "35 min",
-    difficulty: "beginner",
-    completed: false,
-    slug: "led-flashlight",
-    category: "beginner",
-    content: {
-      sections: [
-        {
-          title: "Project Introduction",
-          content: "In this lesson, we'll apply what we've learned to build a practical device: an LED flashlight. This project combines power sources, switches, resistors, and LEDs into a functional circuit with real-world applications."
-        },
-        {
-          title: "Circuit Design",
-          content: "Our flashlight circuit consists of:\n\n- Battery: Provides electrical power\n- Switch: Controls on/off functionality\n- Resistor: Limits current to protect the LED\n- LED: Produces light\n- Connecting wires: Create the conductive path"
-        },
-        {
-          title: "Building the Circuit",
-          content: "We'll assemble our circuit step by step, ensuring correct component placement and secure connections. The switch will be placed between the battery and the rest of the circuit to completely disconnect power when not in use."
-        },
-        {
-          title: "Testing and Analysis",
-          content: "After building the circuit, we'll test its functionality by toggling the switch and observing the LED. We'll also measure voltage and current at various points to verify our design calculations."
-        },
-        {
-          title: "Optimization",
-          content: "We can improve our basic flashlight by:\n\n- Adding multiple LEDs for increased brightness\n- Incorporating a variable resistor for brightness control\n- Using a more efficient battery configuration\n- Adding a blinking function for emergency signaling"
-        },
-        {
-          title: "Real-World Considerations",
-          content: "When taking this design from concept to physical product, consider:\n\n- Battery type and life expectancy\n- Physical enclosure and switch accessibility\n- Water and impact resistance\n- Heat dissipation from LEDs and resistors"
-        }
-      ],
-      simulationActivity: {
-        title: "Virtual Flashlight Construction",
-        description: "Build a functional LED flashlight with a battery, switch, resistor, and LED.",
-        components: ["Battery", "Toggle Switch", "Resistor", "LED", "Wires"],
-        instructions: [
-          "Place all components in the workspace",
-          "Connect the positive battery terminal to one side of the switch",
-          "Connect the other side of the switch to the resistor",
-          "Connect the resistor to the anode (longer leg) of the LED",
-          "Connect the LED cathode (shorter leg) to the negative battery terminal",
-          "Test the circuit by toggling the switch"
-        ],
-        objectives: [
-          "Build a working flashlight circuit",
-          "Understand the role of each component",
-          "Verify correct current and voltage throughout the circuit",
-          "Calculate battery life based on current draw"
-        ]
-      }
-    }
-  },
-  {
-    id: 5,
-    title: "Introduction to Capacitors",
-    description: "Learn about electronic components that store electrical charge.",
-    image: "/placeholder.svg",
-    duration: "50 min",
-    difficulty: "beginner",
-    completed: false,
-    slug: "intro-to-capacitors",
-    category: "beginner",
-    content: {
-      sections: [
-        {
-          title: "Capacitor Fundamentals",
-          content: "Capacitors are electronic components that store electrical energy in an electric field. They consist of two conductive plates separated by an insulating material (dielectric). Capacitance is measured in farads (F), though most capacitors use smaller units like microfarads (μF) or picofarads (pF)."
-        },
-        {
-          title: "Capacitor Behavior",
-          content: "Unlike resistors that impede current flow, capacitors temporarily store and release charge. When connected to a voltage source, a capacitor charges up until its voltage equals the source voltage. When disconnected, it maintains this charge until a path for discharge is provided."
-        },
-        {
-          title: "Charging and Discharging",
-          content: "The charging and discharging of a capacitor follows an exponential curve. The time constant (τ = RC) determines how quickly this happens, where R is the resistance in ohms and C is the capacitance in farads. After one time constant, the capacitor reaches about 63% of its final value."
-        },
-        {
-          title: "Types of Capacitors",
-          content: "Common capacitor types include:\n\n- Ceramic: Small values, non-polarized, stable\n- Electrolytic: Larger values, polarized (+ and - terminals matter)\n- Tantalum: High capacity, stable, polarized\n- Film: Precise values, good for timing circuits"
-        },
-        {
-          title: "Practical Applications",
-          content: "Capacitors serve many functions in circuits:\n\n- Power supply filtering and smoothing\n- Coupling and decoupling (blocking DC while allowing AC)\n- Timing elements in oscillator circuits\n- Energy storage for quick discharge (camera flash)\n- Filtering unwanted frequencies"
-        },
-        {
-          title: "Safety Considerations",
-          content: "Important safety notes:\n\n- Large capacitors can store lethal charges even when power is disconnected\n- Electrolytic capacitors must be connected with correct polarity\n- Exceeding voltage ratings can cause catastrophic failure\n- Capacitors should be discharged before handling"
-        }
-      ],
-      simulationActivity: {
-        title: "Capacitor Charging and Discharging",
-        description: "Observe how capacitors charge and discharge through resistors and how changing component values affects the time constant.",
-        components: ["DC Power Source", "Resistor", "Capacitor", "Switch", "LED", "Voltmeter"],
-        instructions: [
-          "Observe the circuit with power source, resistor, capacitor, and switch",
-          "Close the switch to begin charging the capacitor",
-          "Monitor the voltage across the capacitor as it charges",
-          "Open the switch and observe the capacitor discharge through the LED",
-          "Adjust resistor and capacitor values to see how they affect charging/discharging time"
-        ],
-        objectives: [
-          "Visualize capacitor charging and discharging curves",
-          "Calculate and verify RC time constants",
-          "Understand how resistor and capacitor values affect timing",
-          "Observe energy storage and release in action"
-        ]
-      }
-    }
-  },
-  
-  // Intermediate Lessons
-  {
-    id: 6,
-    title: "Transistors and Amplifiers",
-    description: "Learn how transistors work and build simple amplifier circuits.",
-    image: "/placeholder.svg",
-    duration: "50 min",
-    difficulty: "intermediate",
-    completed: false,
-    slug: "transistors-amplifiers",
-    category: "intermediate"
-  },
-  {
-    id: 7,
-    title: "Operational Amplifiers",
-    description: "Understand op-amp configurations and practical applications.",
-    image: "/placeholder.svg",
-    duration: "55 min",
-    difficulty: "intermediate",
-    completed: false,
-    slug: "op-amps",
-    category: "intermediate"
-  },
-  {
-    id: 8,
-    title: "Digital Logic Circuits",
-    description: "Explore logic gates and design basic digital circuits.",
+    title: "Building Your First Projects",
+    description: "Apply your knowledge by building four practical electronic projects with increasing complexity.",
     image: "/placeholder.svg",
     duration: "60 min",
-    difficulty: "intermediate",
+    difficulty: "beginner",
     completed: false,
-    slug: "digital-logic",
-    category: "intermediate"
-  },
-  {
-    id: 9,
-    title: "Power Supply Design",
-    description: "Learn how to design and build regulated power supplies.",
-    image: "/placeholder.svg",
-    duration: "65 min",
-    difficulty: "intermediate",
-    completed: false,
-    slug: "power-supplies",
-    category: "intermediate"
+    slug: "first-projects",
+    category: "beginner",
+    content: {
+      sections: [
+        {
+          title: "Simple LED Circuit",
+          content: "In this project, we'll build a basic LED circuit with a battery, resistor, LED, and switch. This is the foundation for many electronic devices that include indicator lights."
+        },
+        {
+          title: "Light Sensor Circuit",
+          content: "This project uses a photoresistor (light-dependent resistor) to detect ambient light levels. The resistance of the photoresistor decreases as light intensity increases, allowing us to create a circuit that responds to light conditions."
+        },
+        {
+          title: "Blinking LED Circuit",
+          content: "Creating a blinking LED circuit introduces the concept of timing. We'll use a capacitor and resistor to create an oscillator circuit that turns an LED on and off continuously."
+        },
+        {
+          title: "Tone Generator Circuit",
+          content: "This project builds an audio oscillator that produces a tone through a small speaker. By adjusting component values, you can change the pitch of the tone."
+        },
+        {
+          title: "Project Troubleshooting Guide",
+          content: "When building electronic projects, things don't always work as expected. This guide covers common issues and how to solve them:\n\n- LED doesn't light up: Check polarity, verify battery, check for loose connections\n- Inconsistent behavior: Look for loose wires or cold solder joints\n- Circuit works briefly then stops: Check for component heating or battery drainage\n- Unexpected readings: Verify your meter settings and connection points\n\nRemember: Troubleshooting is an essential skill for electronics. The ability to methodically identify and fix problems will serve you well as you tackle more complex projects."
+        }
+      ]
+    }
   },
   
-  // Advanced Lessons
+  // Introduction to Digital Logic
   {
-    id: 10,
-    title: "Microcontroller Integration",
-    description: "Connect circuits to microcontrollers like Arduino and Raspberry Pi.",
+    id: 5,
+    title: "Introduction to Digital Logic",
+    description: "Learn the basics of digital electronics, logic gates, and build simple digital circuits.",
     image: "/placeholder.svg",
-    duration: "70 min",
-    difficulty: "advanced",
+    duration: "55 min",
+    difficulty: "beginner",
     completed: false,
-    slug: "microcontroller-integration",
-    category: "advanced"
+    slug: "digital-logic",
+    category: "beginner",
+    content: {
+      sections: [
+        {
+          title: "Binary Logic Concepts",
+          content: "Digital electronics works with just two voltage levels, represented as binary values 0 and 1 (or LOW and HIGH). This binary system is the foundation of all computers and digital devices."
+        },
+        {
+          title: "Logic Gates Introduction",
+          content: "Logic gates are the building blocks of digital circuits. Each gate performs a specific logical operation on one or more binary inputs and produces a single binary output.\n\nBasic logic gates include:\n- AND: Output is 1 only if all inputs are 1\n- OR: Output is 1 if any input is 1\n- NOT: Inverts the input (1 becomes 0, 0 becomes 1)\n- NAND: Combination of NOT and AND\n- NOR: Combination of NOT and OR\n- XOR: Output is 1 when inputs are different"
+        },
+        {
+          title: "Simple Digital Circuits",
+          content: "By combining logic gates, we can create circuits that perform useful functions like:\n- Half-adder: Adds two bits together\n- Latch: Stores a single bit of information\n- Decoder: Converts binary code to individual outputs\n- Multiplexer: Selects one of several input signals"
+        },
+        {
+          title: "Binary Counter Project",
+          content: "In this project, we'll build a 2-bit binary counter using flip-flops. The circuit counts from 0 to 3 in binary (00, 01, 10, 11) with each clock pulse, displayed on two LEDs."
+        },
+        {
+          title: "Logic Analyzer Tutorial",
+          content: "A logic analyzer shows the timing of digital signals. In this tutorial, we'll use the simulator's built-in logic analyzer to visualize signals in our digital circuits and understand timing relationships."
+        }
+      ]
+    }
   },
-  {
-    id: 11,
-    title: "PCB Design Fundamentals",
-    description: "Move from breadboard to PCB with professional design techniques.",
-    image: "/placeholder.svg",
-    duration: "75 min",
-    difficulty: "advanced",
-    completed: false,
-    slug: "pcb-design",
-    category: "advanced"
-  },
-  {
-    id: 12,
-    title: "RF Circuit Basics",
-    description: "Learn the principles of radio frequency circuits and antennas.",
-    image: "/placeholder.svg",
-    duration: "80 min",
-    difficulty: "advanced",
-    completed: false,
-    slug: "rf-circuits",
-    category: "advanced"
-  },
-  {
-    id: 13,
-    title: "Final Project: Weather Station",
-    description: "Design a complete electronic system with multiple subsystems.",
-    image: "/placeholder.svg",
-    duration: "90 min",
-    difficulty: "advanced",
-    completed: false,
-    slug: "final-project",
-    category: "advanced"
-  }
+  
+  // Rest of the lessons
+  // ... keep existing code
 ];
 
 export const getLessonsByCategory = (category: LessonCategory): Lesson[] => {
