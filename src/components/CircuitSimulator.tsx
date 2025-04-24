@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, RotateCcw, AlertCircle, CheckCircle, Lightbulb, Battery, Component, Metering, Plus, Minus } from 'lucide-react';
+import { Play, RotateCcw, AlertCircle, CheckCircle, Lightbulb, Battery, Component, Gauge, Plus, Minus } from 'lucide-react';
 import { SimulationActivity } from '@/data/lessonData';
 import { 
   Tooltip, 
@@ -209,7 +208,7 @@ const CircuitSimulator: React.FC<CircuitSimulatorProps> = ({
         label = "Resistor";
       }
     } else if (component.includes('switch')) {
-      icon = <Metering className="w-6 h-6" />;
+      icon = <Gauge className="w-6 h-6" />;
       label = "Switch";
     }
     
@@ -258,7 +257,7 @@ const CircuitSimulator: React.FC<CircuitSimulatorProps> = ({
               className={`mx-1 ${selectedTool === 'multimeter' ? 'bg-blue-100' : ''}`}
               onClick={() => setSelectedTool('multimeter')}
             >
-              <Metering className="w-5 h-5" />
+              <Gauge className="w-5 h-5" />
               <span className="sr-only">Multimeter</span>
             </Button>
           </TooltipTrigger>

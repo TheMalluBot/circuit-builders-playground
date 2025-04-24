@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Volt, Resistance, Current } from 'lucide-react';
+import { Zap, CircuitBoard, Battery } from 'lucide-react';
 
 interface OhmsLawCalculatorProps {
   onCalculate?: (values: {voltage: number, current: number, resistance: number}) => void;
@@ -96,7 +96,7 @@ const OhmsLawCalculator: React.FC<OhmsLawCalculatorProps> = ({ onCalculate }) =>
         {mode !== 'voltage' && (
           <div>
             <Label htmlFor="voltage" className="flex items-center gap-1">
-              <Volt className="w-4 h-4" />
+              <Zap className="w-4 h-4" />
               Voltage (V)
             </Label>
             <Input
@@ -115,7 +115,7 @@ const OhmsLawCalculator: React.FC<OhmsLawCalculatorProps> = ({ onCalculate }) =>
         {mode !== 'current' && (
           <div>
             <Label htmlFor="current" className="flex items-center gap-1">
-              <Current className="w-4 h-4" />
+              <Battery className="w-4 h-4" />
               Current (I)
             </Label>
             <Input
@@ -134,7 +134,7 @@ const OhmsLawCalculator: React.FC<OhmsLawCalculatorProps> = ({ onCalculate }) =>
         {mode !== 'resistance' && (
           <div>
             <Label htmlFor="resistance" className="flex items-center gap-1">
-              <Resistance className="w-4 h-4" />
+              <CircuitBoard className="w-4 h-4" />
               Resistance (Ω)
             </Label>
             <Input
@@ -194,15 +194,15 @@ const OhmsLawCalculator: React.FC<OhmsLawCalculatorProps> = ({ onCalculate }) =>
         <Tabs defaultValue="voltage" onValueChange={(v) => setMode(v as any)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="voltage" className="text-xs">
-              <Volt className="w-4 h-4 mr-1" />
+              <Zap className="w-4 h-4 mr-1" />
               Find Voltage
             </TabsTrigger>
             <TabsTrigger value="current" className="text-xs">
-              <Current className="w-4 h-4 mr-1" />
+              <Battery className="w-4 h-4 mr-1" />
               Find Current
             </TabsTrigger>
             <TabsTrigger value="resistance" className="text-xs">
-              <Resistance className="w-4 h-4 mr-1" />
+              <CircuitBoard className="w-4 h-4 mr-1" />
               Find Resistance
             </TabsTrigger>
           </TabsList>
