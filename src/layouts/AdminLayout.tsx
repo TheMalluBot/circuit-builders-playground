@@ -16,7 +16,9 @@ const AdminLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         <AdminSidebar collapsed={sidebarCollapsed} />
         <main className={`flex-1 overflow-auto p-6 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
-          <Outlet />
+          <div className="w-full h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
