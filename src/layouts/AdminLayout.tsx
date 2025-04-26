@@ -8,15 +8,15 @@ const AdminLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-100">
       <AdminTopbar 
         onMenuToggle={() => setSidebarCollapsed(prev => !prev)} 
         sidebarCollapsed={sidebarCollapsed}
       />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex h-[calc(100vh-4rem)]">
         <AdminSidebar collapsed={sidebarCollapsed} />
-        <main className={`flex-1 overflow-auto p-6 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
-          <div className="w-full h-full">
+        <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+          <div className="container mx-auto p-6">
             <Outlet />
           </div>
         </main>
