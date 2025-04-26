@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Save,
@@ -16,13 +16,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import CircuitComponent from '@/components/CircuitComponent';
+import CircuitSimulator from '@/components/CircuitSimulator';
 import { components, getComponentsByCategory } from '@/data/componentData';
 
 const PlaygroundPage = () => {
+  const [simulatorState, setSimulatorState] = useState('empty');
+  const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
+  
   const passiveComponents = getComponentsByCategory('passive');
   const activeComponents = getComponentsByCategory('active');
   const powerComponents = getComponentsByCategory('power');
   const logicComponents = getComponentsByCategory('logic');
+  
+  const handleComponentHighlight = (id: string) => {
+    setHighlightedComponent(id);
+    setTimeout(() => setHighlightedComponent(null), 1500);
+  };
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -60,30 +69,47 @@ const PlaygroundPage = () => {
             </div>
           </div>
           
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-4">
-            <div className="flex gap-2 p-2 border-b border-gray-200">
-              <Button size="sm" variant="default" className="gap-1">
-                <Play className="w-4 h-4" />
-                <span>Run</span>
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1">
-                <Pause className="w-4 h-4" />
-                <span>Pause</span>
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1">
-                <RotateCcw className="w-4 h-4" />
-                <span>Reset</span>
-              </Button>
-              <div className="ml-auto">
-                <Button size="sm" variant="destructive" className="gap-1">
-                  <Trash2 className="w-4 h-4" />
-                  <span>Clear</span>
-                </Button>
+          <div className="grid lg:grid-cols-4 gap-6 mb-6">
+            <div className="lg:col-span-3">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[600px]">
+                {/* Pass enhanced simulator component */}
+                <CircuitSimulator 
+                  simulatorState={simulatorState}
+                  simulationActivity={{
+                    title: "Circuit Playground",
+                    description: "Design and test circuits",
+                    components: [
+                      "Battery", "Resistor", "LED", "Capacitor", 
+                      "Switch", "Diode", "Transistor"
+                    ],
+                    states: {
+                      empty: { 
+                        components: [] 
+                      },
+                      "basic-led-circuit": {
+                        components: ["battery", "resistor", "led"],
+                        connections: [["battery-0", "resistor-0"], ["resistor-0", "led-0"]]
+                      },
+                      "components-showcase": {
+                        components: [
+                          "battery", "resistor-220", "resistor-1k", 
+                          "led", "capacitor", "switch"
+                        ]
+                      }
+                    }
+                  }}
+                  onHighlightComponent={handleComponentHighlight}
+                  currentState="Build Circuit"
+                />
               </div>
             </div>
             
-            <div className="flex flex-col lg:flex-row h-[600px]">
-              <div className="w-full lg:w-72 border-r border-gray-200 overflow-y-auto">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="font-semibold">Components</h2>
+              </div>
+              
+              <div className="h-[548px] overflow-y-auto">
                 <Tabs defaultValue="passive">
                   <TabsList className="p-2 bg-transparent w-full grid grid-cols-4 h-auto">
                     <TabsTrigger value="passive" className="text-xs h-8">Passive</TabsTrigger>
@@ -100,6 +126,7 @@ const PlaygroundPage = () => {
                           name={component.name}
                           icon={component.icon}
                           description={component.description}
+                          highlight={highlightedComponent === component.name}
                         />
                       ))}
                     </div>
@@ -113,6 +140,7 @@ const PlaygroundPage = () => {
                           name={component.name}
                           icon={component.icon}
                           description={component.description}
+                          highlight={highlightedComponent === component.name}
                         />
                       ))}
                     </div>
@@ -126,6 +154,7 @@ const PlaygroundPage = () => {
                           name={component.name}
                           icon={component.icon}
                           description={component.description}
+                          highlight={highlightedComponent === component.name}
                         />
                       ))}
                     </div>
@@ -139,27 +168,12 @@ const PlaygroundPage = () => {
                           name={component.name}
                           icon={component.icon}
                           description={component.description}
+                          highlight={highlightedComponent === component.name}
                         />
                       ))}
                     </div>
                   </TabsContent>
                 </Tabs>
-              </div>
-              
-              <div className="flex-1 relative">
-                <div className="simulator-grid h-full w-full p-4">
-                  {/* This would be the actual simulator canvas */}
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <img src="/placeholder.svg" alt="Circuit" className="w-32 h-32 mx-auto mb-4 opacity-30" />
-                      <p className="text-muted-foreground mb-3">Drag components from the left panel to start building your circuit</p>
-                      <p className="text-sm text-muted-foreground max-w-md">
-                        Connect components by clicking and dragging between terminals. 
-                        Use the toolbar above to simulate your circuit.
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -170,19 +184,19 @@ const PlaygroundPage = () => {
               <div>
                 <h3 className="font-medium mb-2">1. Choose Components</h3>
                 <p className="text-sm text-muted-foreground">
-                  Select components from the left panel and drag them onto the workspace.
+                  Select components from the panel and drag them onto the workspace.
                 </p>
               </div>
               <div>
                 <h3 className="font-medium mb-2">2. Make Connections</h3>
                 <p className="text-sm text-muted-foreground">
-                  Connect components by clicking and dragging between terminals.
+                  Use the wire tool to connect components and create a circuit.
                 </p>
               </div>
               <div>
                 <h3 className="font-medium mb-2">3. Run Simulation</h3>
                 <p className="text-sm text-muted-foreground">
-                  Click the Run button to see how your circuit behaves.
+                  Click the Run button to see how your circuit behaves in real-time.
                 </p>
               </div>
             </div>
@@ -196,3 +210,4 @@ const PlaygroundPage = () => {
 };
 
 export default PlaygroundPage;
+
