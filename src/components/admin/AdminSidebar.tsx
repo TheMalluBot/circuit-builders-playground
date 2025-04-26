@@ -149,11 +149,11 @@ const AdminSidebar = ({ collapsed = false }: AdminSidebarProps) => {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="p-4">
+      <div className="p-3">
         {sidebarGroups.map((group, index) => (
-          <div key={group.title} className="mb-6">
+          <div key={group.title} className="mb-5">
             {!collapsed && (
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-3">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-3">
                 {group.title}
               </h3>
             )}

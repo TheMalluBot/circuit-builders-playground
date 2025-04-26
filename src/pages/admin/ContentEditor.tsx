@@ -20,7 +20,7 @@ const ContentEditorPage = () => {
   
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Content Editor</h1>
           <p className="text-muted-foreground">
@@ -34,8 +34,8 @@ const ContentEditorPage = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+        <div className="lg:col-span-3">
           <ContentEditor
             title="Lesson Content"
             initialContent={content}
@@ -43,9 +43,9 @@ const ContentEditorPage = () => {
           />
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-5">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-5">
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="title">Lesson Title</Label>
@@ -74,7 +74,7 @@ const ContentEditorPage = () => {
                   </Select>
                 </div>
                 
-                <div className="pt-4">
+                <div className="pt-3">
                   <Button onClick={handleSave} className="w-full">
                     Publish Lesson
                   </Button>
@@ -84,7 +84,7 @@ const ContentEditorPage = () => {
           </Card>
           
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-5">
               <h3 className="font-medium mb-2">Markdown Support</h3>
               <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
                 <li>Use <strong>**bold**</strong> for bold text</li>

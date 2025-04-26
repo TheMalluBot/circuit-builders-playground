@@ -59,16 +59,16 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="mb-8">
+      <Tabs defaultValue="overview" className="mb-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="activity">Recent Activity</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-5">
           {/* Summary Cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium">Active Users</CardTitle>
@@ -122,13 +122,13 @@ const AdminDashboard = () => {
           
           {/* Quick Actions */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle>Quick Actions</CardTitle>
               <CardDescription>
                 Frequently performed tasks and shortcuts
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Button variant="outline" className="h-auto flex-col items-center justify-center p-4 gap-2">
                 <Plus className="h-5 w-5" />
                 Create Lesson
@@ -150,16 +150,16 @@ const AdminDashboard = () => {
           
           {/* Recent Activity */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle>Recent Activity</CardTitle>
               <CardDescription>
                 The latest updates and changes on your platform
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {summaryData.recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-4">
+                  <div key={activity.id} className="flex items-start gap-3">
                     <div className="bg-muted rounded-full p-2">
                       {activity.type === "lesson_published" || activity.type === "lesson_updated" ? (
                         <FileText className="h-4 w-4" />
@@ -239,16 +239,16 @@ const AdminDashboard = () => {
       </Tabs>
       
       {/* Bottom Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle>Top Performing Lessons</CardTitle>
             <CardDescription>
               Lessons with the highest completion rates
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {summaryData.topLessons.map((lesson, i) => (
                 <div key={lesson.id} className="flex items-center">
                   <div className="w-6 text-muted-foreground">{i + 1}.</div>
