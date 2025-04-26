@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -73,11 +74,11 @@ const LessonEditor = () => {
       if (mockLesson.content?.sections) {
         const generatedSections: Section[] = mockLesson.content.sections.map((section, index) => ({
           id: `section-${index}`,
-          type: index === 0 ? 'text' : 
-                index === mockLesson.content!.sections.length - 1 ? 'summary' : 
-                index % 3 === 0 ? 'simulation' : 
-                index % 4 === 0 ? 'quiz' : 
-                index % 5 === 0 ? 'video' : 'text',
+          type: (index === 0 ? 'text' : 
+                 index === mockLesson.content!.sections.length - 1 ? 'summary' : 
+                 index % 3 === 0 ? 'simulation' : 
+                 index % 4 === 0 ? 'quiz' : 
+                 index % 5 === 0 ? 'video' : 'text') as SectionType,
           title: section.title,
           content: section.content,
           order: index

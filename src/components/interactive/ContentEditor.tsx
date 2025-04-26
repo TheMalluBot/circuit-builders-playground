@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ContentEditorProps {
   title?: string;
@@ -50,10 +51,10 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ title = "Content Editor",
       </div>
       
       {isEditing ? (
-        <textarea
+        <Textarea
           value={content}
           onChange={handleContentChange}
-          className="w-full p-3 rounded-md border min-h-[300px] focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full p-3 min-h-[300px]"
           placeholder="Enter content here... You can use markdown formatting."
         />
       ) : (
