@@ -12,7 +12,6 @@ const ContentEditorPage = () => {
   const [title, setTitle] = useState<string>('');
   const [category, setCategory] = useState<string>('beginner');
   const [content, setContent] = useState<string>('');
-  const [previewMode, setPreviewMode] = useState<boolean>(false);
   
   const handleSave = () => {
     // In a real app, this would save to a database
@@ -29,18 +28,6 @@ const ContentEditorPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant={previewMode ? "outline" : "default"}
-            onClick={() => setPreviewMode(false)}
-          >
-            Edit
-          </Button>
-          <Button 
-            variant={previewMode ? "default" : "outline"}
-            onClick={() => setPreviewMode(true)}
-          >
-            Preview
-          </Button>
           <Button onClick={handleSave}>
             Save
           </Button>
@@ -49,22 +36,11 @@ const ContentEditorPage = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {previewMode ? (
-            <Card>
-              <CardContent className="pt-6">
-                <h2 className="text-2xl font-bold mb-4">{title || "Untitled Lesson"}</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: content }} />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <ContentEditor
-              title="Lesson Content"
-              initialContent={content}
-              onSave={(newContent) => setContent(newContent)}
-            />
-          )}
+          <ContentEditor
+            title="Lesson Content"
+            initialContent={content}
+            onSave={(newContent) => setContent(newContent)}
+          />
         </div>
         
         <div className="space-y-6">
@@ -109,13 +85,14 @@ const ContentEditorPage = () => {
           
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-medium mb-2">Formatting Tips</h3>
+              <h3 className="font-medium mb-2">Markdown Support</h3>
               <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
                 <li>Use <strong>**bold**</strong> for bold text</li>
                 <li>Use <em>*italic*</em> for italic text</li>
+                <li>Use <code>## Heading</code> for headings</li>
                 <li>Create lists with - or 1. prefixes</li>
-                <li>Insert images with ![description](url)</li>
-                <li>Create headings with # symbols</li>
+                <li>Insert code with ```code blocks```</li>
+                <li>Create links with [text](url)</li>
               </ul>
             </CardContent>
           </Card>
