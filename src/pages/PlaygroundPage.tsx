@@ -96,7 +96,9 @@ const PlaygroundPage = () => {
                           "led", "capacitor", "switch"
                         ]
                       }
-                    }
+                    },
+                    instructions: "Follow the guided instructions to build circuits",
+                    objectives: ["Learn basic components", "Build working circuits", "Understand electrical principles"]
                   }}
                   onHighlightComponent={handleComponentHighlight}
                   currentState="Build Circuit"
@@ -210,4 +212,3 @@ const PlaygroundPage = () => {
 };
 
 export default PlaygroundPage;
-

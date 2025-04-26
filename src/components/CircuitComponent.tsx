@@ -8,6 +8,7 @@ type CircuitComponentProps = {
   description: string;
   className?: string;
   onClick?: () => void;
+  highlight?: boolean;
 };
 
 const CircuitComponent: React.FC<CircuitComponentProps> = ({
@@ -16,10 +17,15 @@ const CircuitComponent: React.FC<CircuitComponentProps> = ({
   description,
   className,
   onClick,
+  highlight,
 }) => {
   return (
     <div 
-      className={cn("circuit-component cursor-pointer", className)}
+      className={cn(
+        "circuit-component cursor-pointer transition-all duration-300", 
+        highlight && "ring-2 ring-blue-500 scale-105",
+        className
+      )}
       onClick={onClick}
     >
       <div className="flex flex-col items-center text-center">
