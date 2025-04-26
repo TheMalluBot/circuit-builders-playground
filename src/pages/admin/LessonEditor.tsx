@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -31,8 +30,8 @@ import {
   GripVertical, ArrowUp, ArrowDown, X, FileText,
   Film, TestTube, HelpCircle, BookOpen
 } from 'lucide-react';
+import { format } from 'date-fns';
 
-// Sample section types
 type SectionType = 'text' | 'simulation' | 'quiz' | 'video' | 'summary';
 
 interface Section {
@@ -59,9 +58,7 @@ const LessonEditor = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
   
-  // Simulate loading lesson data
   useEffect(() => {
-    // For demo purposes, just use a mock lesson
     const mockLesson = lessons.find(l => l.id === (id ? parseInt(id) : -1)) || lessons[0];
     
     if (mockLesson) {
@@ -73,9 +70,8 @@ const LessonEditor = () => {
       setCategory(mockLesson.category);
       setStatus(mockLesson.id <= 5 ? 'published' : 'draft');
       
-      // Generate sections from lesson content
       if (mockLesson.content?.sections) {
-        const generatedSections = mockLesson.content.sections.map((section, index) => ({
+        const generatedSections: Section[] = mockLesson.content.sections.map((section, index) => ({
           id: `section-${index}`,
           type: index === 0 ? 'text' : 
                 index === mockLesson.content!.sections.length - 1 ? 'summary' : 
@@ -94,7 +90,6 @@ const LessonEditor = () => {
     }
   }, [id]);
   
-  // Simulate auto-save
   useEffect(() => {
     const timer = setTimeout(() => {
       if (title && description) {
@@ -156,12 +151,10 @@ const LessonEditor = () => {
     const newSections = [...sections];
     const targetIndex = direction === 'up' ? sectionIndex - 1 : sectionIndex + 1;
     
-    // Swap positions
     const temp = newSections[targetIndex];
     newSections[targetIndex] = newSections[sectionIndex];
     newSections[sectionIndex] = temp;
     
-    // Update order values
     newSections.forEach((section, index) => {
       section.order = index;
     });
@@ -195,7 +188,6 @@ const LessonEditor = () => {
   
   return (
     <div className="relative min-h-[calc(100vh-12rem)] pb-20">
-      {/* Back button and header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="ghost" onClick={() => navigate("/admin/lessons")} className="mr-4">
@@ -234,7 +226,6 @@ const LessonEditor = () => {
         </div>
       </div>
       
-      {/* Main editor tabs */}
       <Tabs 
         value={activeTab} 
         onValueChange={setActiveTab}
@@ -248,10 +239,8 @@ const LessonEditor = () => {
           </TabsList>
         </div>
         
-        {/* Content Tab */}
         <TabsContent value="content" className="p-0 m-0">
           <div className="grid grid-cols-4">
-            {/* Left sidebar - Content structure */}
             <div className="col-span-1 border-r p-4 h-[calc(100vh-18rem)] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium">Lesson Structure</h3>
@@ -343,7 +332,6 @@ const LessonEditor = () => {
               )}
             </div>
             
-            {/* Main content area */}
             <div className="col-span-3 p-6 h-[calc(100vh-18rem)] overflow-y-auto">
               {selectedSection ? (
                 <div>
@@ -582,7 +570,6 @@ const LessonEditor = () => {
           </div>
         </TabsContent>
         
-        {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6 p-6">
           <h3 className="text-lg font-medium mb-4">Lesson Settings</h3>
           
@@ -747,7 +734,6 @@ const LessonEditor = () => {
           </div>
         </TabsContent>
         
-        {/* Metadata Tab */}
         <TabsContent value="metadata" className="space-y-6 p-6">
           <h3 className="text-lg font-medium mb-4">Lesson Metadata</h3>
           
@@ -891,7 +877,6 @@ const LessonEditor = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Sticky footer with save buttons */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center">
         <div>
           <span className="text-sm text-muted-foreground">
