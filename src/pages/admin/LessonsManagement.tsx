@@ -307,177 +307,177 @@ const LessonsManagement = () => {
                 </div>
               )}
             </div>
-          </Tabs>
-        </div>
-        
-        <TabsContent value="table" className="mt-0">
-          <div className="border rounded-md">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-slate-50">
-                  <th className="p-3 w-10">
-                    <Checkbox 
-                      checked={selectedLessons.length === filteredLessons.length && filteredLessons.length > 0}
-                      onCheckedChange={selectAllLessons}
-                      aria-label="Select all"
-                    />
-                  </th>
-                  <th className="text-left p-3 text-sm font-medium">Title</th>
-                  <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Status</th>
-                  <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Difficulty</th>
-                  <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Duration</th>
-                  <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">Created</th>
-                  <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">Updated</th>
-                  <th className="text-right p-3 text-sm font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+            
+            <TabsContent value="table" className="mt-0">
+              <div className="border rounded-md">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-slate-50">
+                      <th className="p-3 w-10">
+                        <Checkbox 
+                          checked={selectedLessons.length === filteredLessons.length && filteredLessons.length > 0}
+                          onCheckedChange={selectAllLessons}
+                          aria-label="Select all"
+                        />
+                      </th>
+                      <th className="text-left p-3 text-sm font-medium">Title</th>
+                      <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Status</th>
+                      <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Difficulty</th>
+                      <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Duration</th>
+                      <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">Created</th>
+                      <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">Updated</th>
+                      <th className="text-right p-3 text-sm font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLessons.map((lesson) => (
+                      <tr key={lesson.id} className="border-b hover:bg-slate-50">
+                        <td className="p-3">
+                          <Checkbox 
+                            checked={selectedLessons.includes(lesson.id)}
+                            onCheckedChange={() => toggleSelectLesson(lesson.id)}
+                            aria-label={`Select ${lesson.title}`}
+                          />
+                        </td>
+                        <td className="p-3">
+                          <div className="font-medium">{lesson.title}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-1 md:hidden mt-1">
+                            {getStatusBadge(lesson)} {getDifficultyBadge(lesson.difficulty)}
+                          </div>
+                        </td>
+                        <td className="p-3 hidden md:table-cell">{getStatusBadge(lesson)}</td>
+                        <td className="p-3 hidden md:table-cell">{getDifficultyBadge(lesson.difficulty)}</td>
+                        <td className="p-3 hidden md:table-cell">{lesson.duration}</td>
+                        <td className="p-3 hidden lg:table-cell text-sm text-muted-foreground">
+                          {format(lesson.createdAt, 'MMM d, yyyy')}
+                        </td>
+                        <td className="p-3 hidden lg:table-cell text-sm text-muted-foreground">
+                          {format(lesson.updatedAt, 'MMM d, yyyy')}
+                        </td>
+                        <td className="p-3 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <span className="sr-only">Open menu</span>
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleEditLesson(lesson)}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDuplicateLesson(lesson)}>
+                                <Copy className="mr-2 h-4 w-4" /> Duplicate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toast.success(`Preview lesson: ${lesson.title}`)}>
+                                <Eye className="mr-2 h-4 w-4" /> Preview
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleDeleteLesson(lesson)}
+                              >
+                                <Trash className="mr-2 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                    
+                    {filteredLessons.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="p-10 text-center text-muted-foreground">
+                          No lessons found matching your filters.
+                          <div className="mt-2">
+                            <Button variant="outline" size="sm" onClick={clearFilters}>
+                              Clear Filters
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="cards" className="mt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredLessons.map((lesson) => (
-                  <tr key={lesson.id} className="border-b hover:bg-slate-50">
-                    <td className="p-3">
-                      <Checkbox 
-                        checked={selectedLessons.includes(lesson.id)}
-                        onCheckedChange={() => toggleSelectLesson(lesson.id)}
-                        aria-label={`Select ${lesson.title}`}
-                      />
-                    </td>
-                    <td className="p-3">
-                      <div className="font-medium">{lesson.title}</div>
-                      <div className="text-sm text-muted-foreground line-clamp-1 md:hidden mt-1">
-                        {getStatusBadge(lesson)} {getDifficultyBadge(lesson.difficulty)}
+                  <Card key={lesson.id} className="overflow-hidden">
+                    <div className="relative">
+                      <div className="absolute top-2 right-2">
+                        <Checkbox 
+                          checked={selectedLessons.includes(lesson.id)}
+                          onCheckedChange={() => toggleSelectLesson(lesson.id)}
+                          aria-label={`Select ${lesson.title}`}
+                        />
                       </div>
-                    </td>
-                    <td className="p-3 hidden md:table-cell">{getStatusBadge(lesson)}</td>
-                    <td className="p-3 hidden md:table-cell">{getDifficultyBadge(lesson.difficulty)}</td>
-                    <td className="p-3 hidden md:table-cell">{lesson.duration}</td>
-                    <td className="p-3 hidden lg:table-cell text-sm text-muted-foreground">
-                      {format(lesson.createdAt, 'MMM d, yyyy')}
-                    </td>
-                    <td className="p-3 hidden lg:table-cell text-sm text-muted-foreground">
-                      {format(lesson.updatedAt, 'MMM d, yyyy')}
-                    </td>
-                    <td className="p-3 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <span className="sr-only">Open menu</span>
-                            <ChevronDown className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleEditLesson(lesson)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicateLesson(lesson)}>
-                            <Copy className="mr-2 h-4 w-4" /> Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toast.success(`Preview lesson: ${lesson.title}`)}>
-                            <Eye className="mr-2 h-4 w-4" /> Preview
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-red-600"
-                            onClick={() => handleDeleteLesson(lesson)}
-                          >
-                            <Trash className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
+                      <div className="h-40 bg-slate-100 flex items-center justify-center">
+                        <div className="text-slate-400">
+                          <img 
+                            src={lesson.image || "/placeholder.svg"} 
+                            alt={lesson.title} 
+                            className="h-40 w-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium truncate">{lesson.title}</h3>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        {getStatusBadge(lesson)}
+                        {getDifficultyBadge(lesson.difficulty)}
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {lesson.description}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {format(lesson.updatedAt, 'MMM d, yyyy')}
+                        </div>
+                        <div>
+                          {lesson.duration}
+                        </div>
+                      </div>
+                      <div className="mt-4 flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => toast.success(`Preview lesson: ${lesson.title}`)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDuplicateLesson(lesson)}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditLesson(lesson)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteLesson(lesson)}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
                 ))}
                 
                 {filteredLessons.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="p-10 text-center text-muted-foreground">
-                      No lessons found matching your filters.
-                      <div className="mt-2">
-                        <Button variant="outline" size="sm" onClick={clearFilters}>
-                          Clear Filters
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                  <div className="col-span-full p-10 text-center text-muted-foreground">
+                    No lessons found matching your filters.
+                    <div className="mt-2">
+                      <Button variant="outline" size="sm" onClick={clearFilters}>
+                        Clear Filters
+                      </Button>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="cards" className="mt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredLessons.map((lesson) => (
-              <Card key={lesson.id} className="overflow-hidden">
-                <div className="relative">
-                  <div className="absolute top-2 right-2">
-                    <Checkbox 
-                      checked={selectedLessons.includes(lesson.id)}
-                      onCheckedChange={() => toggleSelectLesson(lesson.id)}
-                      aria-label={`Select ${lesson.title}`}
-                    />
-                  </div>
-                  <div className="h-40 bg-slate-100 flex items-center justify-center">
-                    <div className="text-slate-400">
-                      <img 
-                        src={lesson.image || "/placeholder.svg"} 
-                        alt={lesson.title} 
-                        className="h-40 w-full object-cover"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium truncate">{lesson.title}</h3>
-                  </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    {getStatusBadge(lesson)}
-                    {getDifficultyBadge(lesson.difficulty)}
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {lesson.description}
-                  </p>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {format(lesson.updatedAt, 'MMM d, yyyy')}
-                    </div>
-                    <div>
-                      {lesson.duration}
-                    </div>
-                  </div>
-                  <div className="mt-4 flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => toast.success(`Preview lesson: ${lesson.title}`)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDuplicateLesson(lesson)}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleEditLesson(lesson)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteLesson(lesson)}>
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-            
-            {filteredLessons.length === 0 && (
-              <div className="col-span-full p-10 text-center text-muted-foreground">
-                No lessons found matching your filters.
-                <div className="mt-2">
-                  <Button variant="outline" size="sm" onClick={clearFilters}>
-                    Clear Filters
-                  </Button>
-                </div>
               </div>
-            )}
-          </div>
-        </TabsContent>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
