@@ -1,5 +1,4 @@
-
-import { Component, Node, Wire } from './types';
+import { Component, Node, Wire, Pin } from './types';
 
 export interface RenderOptions {
   showVoltages: boolean;
@@ -23,6 +22,7 @@ export class CircuitRenderer {
   private panOffset: {x: number; y: number} = {x: 0, y: 0};
   private particles: Map<string, Particle[]> = new Map();
   private lastRenderTime: number = 0;
+  private componentImages: Map<string, HTMLImageElement> = new Map();
   
   constructor(canvas: HTMLCanvasElement, options: Partial<RenderOptions> = {}) {
     this.canvas = canvas;
@@ -37,6 +37,20 @@ export class CircuitRenderer {
     };
     
     this.lastRenderTime = performance.now();
+    
+    // Set initial canvas size
+    this.resizeCanvas();
+    
+    // Add resize listener
+    window.addEventListener('resize', this.resizeCanvas.bind(this));
+  }
+  
+  private resizeCanvas() {
+    const container = this.canvas.parentElement;
+    if (container) {
+      this.canvas.width = container.clientWidth;
+      this.canvas.height = container.clientHeight;
+    }
   }
   
   setOptions(options: Partial<RenderOptions>): void {
@@ -68,6 +82,30 @@ export class CircuitRenderer {
     };
   }
   
+  // Find actual positions of pins in the canvas coordinate system
+  getPinPositions(component: Component): {id: string, x: number, y: number}[] {
+    return component.pins.map(pin => {
+      // Apply rotation around component center
+      const cos = Math.cos(component.rotation * Math.PI / 180);
+      const sin = Math.sin(component.rotation * Math.PI / 180);
+      
+      const dx = pin.position.x - component.position.x;
+      const dy = pin.position.y - component.position.y;
+      
+      const rotatedX = dx * cos - dy * sin + component.position.x;
+      const rotatedY = dx * sin + dy * cos + component.position.y;
+      
+      // Convert to canvas coordinates
+      const canvasCoords = this.circuitToCanvasCoords(rotatedX, rotatedY);
+      
+      return {
+        id: pin.id,
+        x: canvasCoords.x,
+        y: canvasCoords.y
+      };
+    });
+  }
+  
   // Main render method
   render(components: Component[], nodes: Node[], wires: Wire[]): void {
     const now = performance.now();
@@ -88,7 +126,7 @@ export class CircuitRenderer {
     }
     
     // Draw wires
-    this.drawWires(wires);
+    this.drawWires(wires, nodes);
     
     // Draw wire current flow animations if enabled
     if (this.options.animateCurrentFlow) {
@@ -101,7 +139,7 @@ export class CircuitRenderer {
     }
     
     // Draw nodes
-    this.drawNodes(nodes);
+    this.drawNodes(nodes, components);
     
     // Draw voltage and current labels if enabled
     if (this.options.showVoltages) {
@@ -146,45 +184,80 @@ export class CircuitRenderer {
     this.ctx.stroke();
   }
   
-  private drawWires(wires: Wire[]): void {
+  private drawWires(wires: Wire[], nodes: Node[]): void {
     // Set wire style
     const wireColor = this.options.theme === 'light' ? '#333333' : '#cccccc';
     this.ctx.strokeStyle = wireColor;
     this.ctx.lineWidth = 2;
     this.ctx.lineCap = 'round';
     
+    // Map from node ID to node object
+    const nodeMap = new Map<string, Node>();
+    for (const node of nodes) {
+      nodeMap.set(node.id, node);
+    }
+    
     for (const wire of wires) {
       // Find connected components and pins
-      // This is simplified - in reality, you'd need to get actual pin positions
-      // based on node connections
+      const node1 = nodeMap.get(wire.nodes[0]);
+      const node2 = nodeMap.get(wire.nodes[1]);
       
-      // For now, we'll just draw straight lines between nodes
-      // You'd need to enhance this with wire path calculation
+      if (!node1 || !node2) continue;
       
+      // For now, we'll just pick the first connection in each node
+      // In a more sophisticated renderer, you'd calculate proper wire paths
+      const conn1 = node1.connections[0];
+      const conn2 = node2.connections[0];
+      
+      if (!conn1 || !conn2) continue;
+      
+      // Draw wire between the two node positions (simplified)
       this.ctx.beginPath();
-      
-      // Draw wire
-      // Replace this with actual wire path drawing based on your data structure
-      // This is just a placeholder
-      this.ctx.moveTo(100, 100);
-      this.ctx.lineTo(200, 200);
-      
+      this.ctx.moveTo(conn1.nodeId, conn1.componentId);
+      this.ctx.lineTo(conn2.nodeId, conn2.componentId);
       this.ctx.stroke();
     }
   }
   
-  private drawNodes(nodes: Node[]): void {
+  private drawNodes(nodes: Node[], components: Component[]): void {
     // Set node style
     const nodeColor = this.options.theme === 'light' ? '#555555' : '#aaaaaa';
     this.ctx.fillStyle = nodeColor;
     
+    // Create a map of components by ID for quick lookup
+    const componentMap = new Map<string, Component>();
+    for (const component of components) {
+      componentMap.set(component.id, component);
+    }
+    
     for (const node of nodes) {
-      // Find node position by averaging connected pin positions
-      // This is simplified - you'd need to get actual positions
-      // For now, just a placeholder
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, 3, 0, 2 * Math.PI);
-      this.ctx.fill();
+      // Find all pins connected to this node
+      const pinPositions: {x: number, y: number}[] = [];
+      
+      for (const connection of node.connections) {
+        const component = componentMap.get(connection.componentId);
+        if (!component) continue;
+        
+        const pin = component.pins.find(p => p.id === connection.pinId);
+        if (!pin) continue;
+        
+        // Get rotated pin position
+        const angle = component.rotation * Math.PI / 180;
+        const dx = pin.position.x - component.position.x;
+        const dy = pin.position.y - component.position.y;
+        
+        const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle) + component.position.x;
+        const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle) + component.position.y;
+        
+        pinPositions.push({ x: rotatedX, y: rotatedY });
+      }
+      
+      // Draw node at each pin position
+      for (const pos of pinPositions) {
+        this.ctx.beginPath();
+        this.ctx.arc(pos.x, pos.y, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+      }
     }
   }
   
@@ -195,6 +268,7 @@ export class CircuitRenderer {
         this.drawResistor(component);
         break;
       case 'dcVoltageSource':
+      case 'battery':
         this.drawDCVoltageSource(component);
         break;
       case 'led':

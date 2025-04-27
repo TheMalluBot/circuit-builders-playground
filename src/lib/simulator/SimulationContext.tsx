@@ -15,6 +15,7 @@ interface SimulationContextType {
   toggleSimulation: () => void;
   resetSimulation: () => void;
   setRenderOptions: (options: Partial<RenderOptions>) => void;
+  toggleSwitch: (componentId: string) => void;
 }
 
 const SimulationContext = createContext<SimulationContextType>({
@@ -26,7 +27,8 @@ const SimulationContext = createContext<SimulationContextType>({
   removeComponent: () => {},
   toggleSimulation: () => {},
   resetSimulation: () => {},
-  setRenderOptions: () => {}
+  setRenderOptions: () => {},
+  toggleSwitch: () => {}
 });
 
 interface SimulationProviderProps {
@@ -39,7 +41,56 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
   const [renderer, setRenderer] = useState<CircuitRenderer | null>(null);
   const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  
+  // Set up the renderer when canvas is available
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    
+    // Create the renderer instance
+    const newRenderer = new CircuitRenderer(canvasRef.current);
+    setRenderer(newRenderer);
+    
+    // Set up resize handler
+    const handleResize = () => {
+      if (canvasRef.current) {
+        const container = canvasRef.current.parentElement;
+        if (container) {
+          canvasRef.current.width = container.clientWidth;
+          canvasRef.current.height = container.clientHeight;
+          
+          // Force a re-render
+          updateSimulationState();
+        }
+      }
+    };
+    
+    // Initial sizing
+    handleResize();
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [canvasRef.current]);
+  
+  // Set up initial state if provided
+  useEffect(() => {
+    if (!engine || !initialState) return;
+    
+    // Add initial components
+    initialState.components.forEach(component => {
+      engine.addComponent(component);
+    });
+    
+    updateSimulationState();
+  }, [engine, initialState]);
   
   // Function to add a component to the circuit
   const addComponent = (type: string, position: { x: number; y: number }, properties: Record<string, any> = {}) => {
@@ -62,6 +113,20 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
     updateSimulationState();
   };
   
+  // Function to toggle switch component
+  const toggleSwitch = (componentId: string) => {
+    if (!engine || !simulationState) return;
+    
+    const component = simulationState.components.find(c => c.id === componentId);
+    if (component && component.type === 'switch') {
+      // Access the toggle method through the component's properties
+      if (typeof component.properties.toggle === 'function') {
+        component.properties.toggle();
+        updateSimulationState();
+      }
+    }
+  };
+  
   // Function to toggle simulation running state
   const toggleSimulation = () => {
     if (!engine) return;
@@ -69,12 +134,18 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
     if (isRunning) {
       engine.stop();
       setIsRunning(false);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
     } else {
       engine.start();
       setIsRunning(true);
       
       // Start rendering loop
-      requestAnimationFrame(renderLoop);
+      if (animationFrameRef.current === null) {
+        animationFrameRef.current = requestAnimationFrame(renderLoop);
+      }
     }
   };
   
@@ -92,50 +163,41 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
     
     renderer.setOptions(options);
     // Trigger a render
-    updateSimulationState();
+    if (simulationState) {
+      renderer.render(
+        simulationState.components, 
+        simulationState.nodes, 
+        simulationState.wires
+      );
+    }
   };
   
   // Function to update the simulation state
   const updateSimulationState = () => {
     if (!engine) return;
     
-    setSimulationState(engine.getState());
+    const newState = engine.getState();
+    setSimulationState(newState);
+    
+    // Single render for non-running state
+    if (renderer && !isRunning) {
+      renderer.render(newState.components, newState.nodes, newState.wires);
+    }
   };
-  
-  // Set up the renderer when canvas is available
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    
-    const newRenderer = new CircuitRenderer(canvasRef.current);
-    setRenderer(newRenderer);
-    
-    return () => {
-      // Clean up renderer if needed
-    };
-  }, [canvasRef.current]);
-  
-  // Set up initial state if provided
-  useEffect(() => {
-    if (!engine || !initialState) return;
-    
-    // Add initial components
-    initialState.components.forEach(component => {
-      engine.addComponent(component);
-    });
-    
-    updateSimulationState();
-  }, [engine, initialState]);
   
   // The rendering loop
   const renderLoop = () => {
-    if (!isRunning || !engine || !renderer) return;
+    if (!isRunning || !engine || !renderer) {
+      animationFrameRef.current = null;
+      return;
+    }
     
     const state = engine.getState();
     renderer.render(state.components, state.nodes, state.wires);
     
     setSimulationState(state);
     
-    requestAnimationFrame(renderLoop);
+    animationFrameRef.current = requestAnimationFrame(renderLoop);
   };
   
   return (
@@ -149,16 +211,15 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
         removeComponent,
         toggleSimulation,
         resetSimulation,
-        setRenderOptions
+        setRenderOptions,
+        toggleSwitch
       }}
     >
       {/* Canvas for rendering the circuit */}
       <canvas
         ref={canvasRef}
-        className="circuit-canvas"
-        width={800}
-        height={600}
-        style={{ display: 'block', width: '100%', height: '100%' }}
+        className="circuit-canvas absolute inset-0 w-full h-full"
+        style={{ zIndex: 0 }}
       />
       
       {children}

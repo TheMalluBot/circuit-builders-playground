@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -11,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { SimulationProvider, useSimulation } from '@/lib/simulator/SimulationContext';
 import { type SimulationActivity, type RenderOptions } from '@/types/simulator';
-import { ComponentFactory } from '@/lib/simulator/ComponentFactory';
 import { type Component } from '@/lib/simulator/types';
 
 interface CircuitSimulatorProps {
@@ -71,36 +71,51 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
   onHighlightComponent,
   renderOptions
 }) => {
-  const { addComponent, engine, renderer } = useSimulation();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { addComponent, removeComponent, engine, renderer, simulationState } = useSimulation();
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [draggedComponent, setDraggedComponent] = useState<Component | null>(null);
   const [scale, setScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   
+  // Load initial state from activity
   useEffect(() => {
-    if (simulationActivity.states[simulatorState]) {
+    if (simulationActivity.states && simulationActivity.states[simulatorState]) {
       const state = simulationActivity.states[simulatorState];
       
+      // Clear existing components first
+      if (simulationState) {
+        simulationState.components.forEach(comp => {
+          removeComponent(comp.id);
+        });
+      }
+      
+      // Add components from the selected state
       state.components.forEach((type, index) => {
         addComponent(type, { 
-          x: 100 + index * 100, 
+          x: 100 + index * 120, 
           y: 200 
         });
       });
+      
+      // TODO: Add connections if present in state.connections
     }
-  }, [simulatorState, simulationActivity]);
+  }, [simulatorState, simulationActivity, simulationState]);
+
+  // Update render options when they change
+  useEffect(() => {
+    if (renderer && renderOptions) {
+      renderer.setOptions(renderOptions);
+    }
+  }, [renderer, renderOptions]);
 
   const handleComponentSelect = (type: string) => {
     setSelectedComponent(prev => prev === type ? null : type);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || !renderer || !selectedComponent) return;
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!renderer || !selectedComponent) return;
     
-    const rect = canvasRef.current.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect();
     const canvasX = e.clientX - rect.left;
     const canvasY = e.clientY - rect.top;
     
@@ -139,8 +154,7 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
         />
       </div>
 
-      <canvas
-        ref={canvasRef}
+      <div 
         className="w-full h-full"
         onClick={handleCanvasClick}
         style={{ cursor: selectedComponent ? 'crosshair' : 'default' }}

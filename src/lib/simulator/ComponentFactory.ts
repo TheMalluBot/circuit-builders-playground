@@ -36,4 +36,54 @@ export class ComponentFactory {
         return null;
     }
   }
+  
+  static getComponentInfo(type: string): { 
+    displayName: string; 
+    description: string;
+    category: string;
+    defaultProperties: Record<string, any>
+  } {
+    switch (type.toLowerCase()) {
+      case 'dcvoltagesource':
+      case 'battery':
+        return {
+          displayName: 'DC Voltage Source',
+          description: 'Provides a constant voltage',
+          category: 'power',
+          defaultProperties: { voltage: 5 }
+        };
+      
+      case 'resistor':
+        return {
+          displayName: 'Resistor',
+          description: 'Limits current flow',
+          category: 'passive',
+          defaultProperties: { resistance: 1000 }
+        };
+      
+      case 'led':
+        return {
+          displayName: 'LED',
+          description: 'Light Emitting Diode',
+          category: 'passive',
+          defaultProperties: { forwardVoltage: 1.7, color: 'red' }
+        };
+      
+      case 'switch':
+        return {
+          displayName: 'Switch',
+          description: 'Opens or closes a circuit',
+          category: 'passive',
+          defaultProperties: { closed: false }
+        };
+      
+      default:
+        return {
+          displayName: 'Unknown Component',
+          description: 'Unknown component type',
+          category: 'unknown',
+          defaultProperties: {}
+        };
+    }
+  }
 }

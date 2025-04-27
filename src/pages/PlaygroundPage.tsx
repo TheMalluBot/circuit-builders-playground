@@ -17,6 +17,7 @@ import Footer from '@/components/Footer';
 import CircuitComponent from '@/components/CircuitComponent';
 import CircuitSimulator from '@/components/CircuitSimulator';
 import { components, getComponentsByCategory } from '@/data/componentData';
+import { SimulationActivity } from '@/types/simulator';
 
 const PlaygroundPage = () => {
   const [simulatorState, setSimulatorState] = useState('empty');
@@ -27,9 +28,40 @@ const PlaygroundPage = () => {
   const powerComponents = getComponentsByCategory('power');
   const logicComponents = getComponentsByCategory('logic');
   
+  const simulationActivity: SimulationActivity = {
+    title: "Circuit Playground",
+    description: "Design and test circuits",
+    components: [
+      "battery", "resistor", "led", "switch"
+    ],
+    states: {
+      empty: { 
+        components: [] 
+      },
+      "basic-led-circuit": {
+        components: ["battery", "resistor", "led"],
+        connections: [["battery-positive", "resistor-p1"], ["resistor-p2", "led-anode"], ["led-cathode", "battery-negative"]]
+      },
+      "switch-led-circuit": {
+        components: ["battery", "switch", "led"],
+        connections: [["battery-positive", "switch-p1"], ["switch-p2", "led-anode"], ["led-cathode", "battery-negative"]]
+      }
+    },
+    instructions: ["Drag components from the panel to build your circuit", "Connect components by clicking on pins", "Use the play button to simulate your circuit"],
+    objectives: ["Learn basic components", "Build working circuits", "Understand electrical principles"]
+  };
+  
   const handleComponentHighlight = (id: string) => {
     setHighlightedComponent(id);
     setTimeout(() => setHighlightedComponent(null), 1500);
+  };
+  
+  const handleStateChange = (state: string) => {
+    setSimulatorState(state);
+  };
+  
+  const handleComponentClick = (component: any) => {
+    handleComponentHighlight(component.name);
   };
   
   return (
@@ -71,36 +103,44 @@ const PlaygroundPage = () => {
           <div className="grid lg:grid-cols-4 gap-6 mb-6">
             <div className="lg:col-span-3">
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[600px]">
-                <CircuitSimulator 
-                  simulatorState={simulatorState}
-                  simulationActivity={{
-                    title: "Circuit Playground",
-                    description: "Design and test circuits",
-                    components: [
-                      "Battery", "Resistor", "LED", "Capacitor", 
-                      "Switch", "Diode", "Transistor"
-                    ],
-                    states: {
-                      empty: { 
-                        components: [] 
-                      },
-                      "basic-led-circuit": {
-                        components: ["battery", "resistor", "led"],
-                        connections: [["battery-0", "resistor-0"], ["resistor-0", "led-0"]]
-                      },
-                      "components-showcase": {
-                        components: [
-                          "battery", "resistor-220", "resistor-1k", 
-                          "led", "capacitor", "switch"
-                        ]
-                      }
-                    },
-                    instructions: ["Follow the guided instructions to build circuits"],
-                    objectives: ["Learn basic components", "Build working circuits", "Understand electrical principles"]
-                  }}
-                  onHighlightComponent={handleComponentHighlight}
-                  currentState="Build Circuit"
-                />
+                <div className="w-full h-full relative">
+                  <CircuitSimulator 
+                    simulatorState={simulatorState}
+                    simulationActivity={simulationActivity}
+                    onHighlightComponent={handleComponentHighlight}
+                    renderOptions={{
+                      showGrid: true,
+                      showVoltages: true,
+                      showCurrents: true,
+                      animateCurrentFlow: true,
+                      theme: 'light'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-4 flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant={simulatorState === 'empty' ? 'default' : 'outline'}
+                  onClick={() => handleStateChange('empty')}
+                >
+                  Empty Circuit
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={simulatorState === 'basic-led-circuit' ? 'default' : 'outline'}
+                  onClick={() => handleStateChange('basic-led-circuit')}
+                >
+                  Basic LED Circuit
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={simulatorState === 'switch-led-circuit' ? 'default' : 'outline'}
+                  onClick={() => handleStateChange('switch-led-circuit')}
+                >
+                  LED Switch Circuit
+                </Button>
               </div>
             </div>
             
@@ -127,6 +167,7 @@ const PlaygroundPage = () => {
                           icon={component.icon}
                           description={component.description}
                           highlight={highlightedComponent === component.name}
+                          onClick={() => handleComponentClick(component)}
                         />
                       ))}
                     </div>
