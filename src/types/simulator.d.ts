@@ -10,7 +10,7 @@ export interface SimulationActivity {
   title: string;
   description: string;
   components: string[];
-  states: {
+  states?: {
     [key: string]: {
       components: string[];
       connections?: string[][];

@@ -1,4 +1,4 @@
-import { Component, Node, Wire, Connection, Pin, MatrixContribution } from './types';
+import { Component, Node, Wire, Connection, Pin, MatrixContribution, SimulationState } from './types';
 
 export class CircuitEngine {
   private components: Component[] = [];
