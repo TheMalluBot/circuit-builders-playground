@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -72,7 +71,6 @@ const PlaygroundPage = () => {
           <div className="grid lg:grid-cols-4 gap-6 mb-6">
             <div className="lg:col-span-3">
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[600px]">
-                {/* Pass enhanced simulator component */}
                 <CircuitSimulator 
                   simulatorState={simulatorState}
                   simulationActivity={{
@@ -97,7 +95,7 @@ const PlaygroundPage = () => {
                         ]
                       }
                     },
-                    instructions: "Follow the guided instructions to build circuits",
+                    instructions: ["Follow the guided instructions to build circuits"],
                     objectives: ["Learn basic components", "Build working circuits", "Understand electrical principles"]
                   }}
                   onHighlightComponent={handleComponentHighlight}
