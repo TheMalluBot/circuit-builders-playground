@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Pause, 
   RotateCcw,
   Battery, 
-  Resistor as ResistorIcon,
   Lightbulb,
-  Switch as SwitchIcon
+  Zap,
+  ToggleRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SimulationProvider, useSimulation } from '@/lib/simulator/SimulationContext';
@@ -81,9 +80,7 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
   const [scale, setScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   
-  // Initialize example components when the component mounts
   useEffect(() => {
-    // Add initial components based on simulationActivity
     if (simulationActivity.states[simulatorState]) {
       const state = simulationActivity.states[simulatorState];
       
@@ -100,7 +97,6 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
     setSelectedComponent(prev => prev === type ? null : type);
   };
 
-  // Handle canvas interactions
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !renderer || !selectedComponent) return;
     
@@ -116,7 +112,6 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
 
   return (
     <div className="relative w-full h-full bg-neutral-50">
-      {/* Component Palette */}
       <div className="absolute top-4 left-4 flex flex-col space-y-2">
         <CircuitComponentButton
           icon={<Battery />}
@@ -125,7 +120,7 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
           onClick={() => handleComponentSelect('battery')}
         />
         <CircuitComponentButton
-          icon={<ResistorIcon />}
+          icon={<Zap />}
           type="resistor"
           selected={selectedComponent === 'resistor'}
           onClick={() => handleComponentSelect('resistor')}
@@ -137,14 +132,13 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
           onClick={() => handleComponentSelect('led')}
         />
         <CircuitComponentButton
-          icon={<SwitchIcon />}
+          icon={<ToggleRight />}
           type="switch"
           selected={selectedComponent === 'switch'}
           onClick={() => handleComponentSelect('switch')}
         />
       </div>
 
-      {/* Canvas */}
       <canvas
         ref={canvasRef}
         className="w-full h-full"
