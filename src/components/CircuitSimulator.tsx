@@ -71,13 +71,13 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
   onHighlightComponent,
   renderOptions
 }) => {
-  const { addComponent, removeComponent, engine, renderer, simulationState, selectComponent } = useSimulation();
+  const { addComponent, removeComponent, engine, renderer, simulationState, selectComponent, createWire } = useSimulation();
   const [selectedComponentType, setSelectedComponentType] = useState<string | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<Component | null>(null);
   const [isDrawingWire, setIsDrawingWire] = useState(false);
-  const [wireStart, setWireStart] = useState<{x: number, y: number} | null>(null);
+  const [wireStart, setWireStart] = useState<{nodeId: string, x: number, y: number} | null>(null);
   const [wireEnd, setWireEnd] = useState<{x: number, y: number} | null>(null);
-  const [hoveredPin, setHoveredPin] = useState<{componentId: string, pinId: string} | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<{componentId: string, nodeId: string} | null>(null);
   const [scale, setScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,11 +103,35 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
       });
       
       // Add connections if present in state.connections
-      if (state.connections) {
-        // Implementation for connections
+      if (state.connections && engine) {
+        setTimeout(() => {
+          if (simulationState && state.connections) {
+            state.connections.forEach(connection => {
+              // Find actual node IDs from component-pin references
+              const [startRef, endRef] = connection;
+              const [startCompId, startPinId] = startRef.split('-');
+              const [endCompId, endPinId] = endRef.split('-');
+              
+              // Find components
+              const startComp = simulationState.components.find(c => c.id.includes(startCompId));
+              const endComp = simulationState.components.find(c => c.id.includes(endCompId));
+              
+              if (startComp && endComp) {
+                // Find pins
+                const startPin = startComp.pins.find(p => p.id === startPinId);
+                const endPin = endComp.pins.find(p => p.id === endPinId);
+                
+                // Connect if both pins exist and have node IDs
+                if (startPin && endPin && startPin.nodeId && endPin.nodeId) {
+                  createWire(startPin.nodeId, endPin.nodeId);
+                }
+              }
+            });
+          }
+        }, 500); // Delay to ensure components are fully added
       }
     }
-  }, [simulatorState, simulationActivity, simulationState]);
+  }, [simulatorState, simulationActivity, simulationState, engine]);
 
   // Update render options when they change
   useEffect(() => {
@@ -136,10 +160,57 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
     const handleMouseDown = (e: MouseEvent) => {
       const coords = getCanvasCoords(e);
       
+      // Check if we're drawing a wire
+      if (isDrawingWire) {
+        if (hoveredNode) {
+          // Complete wire connection
+          if (wireStart && wireStart.nodeId !== hoveredNode.nodeId) {
+            createWire(wireStart.nodeId, hoveredNode.nodeId);
+          }
+          
+          // Reset wire drawing state
+          setIsDrawingWire(false);
+          setWireStart(null);
+          setWireEnd(null);
+          return;
+        }
+        
+        // If not hovering over a node, check if we're starting a new wire
+        // by checking if clicked on a component pin
+        if (simulationState) {
+          for (const comp of simulationState.components) {
+            for (const pin of comp.pins) {
+              // Calculate actual pin position based on component position/rotation
+              const pinPos = calculatePinPosition(comp, pin);
+              const dx = pinPos.x - coords.x;
+              const dy = pinPos.y - coords.y;
+              const distance = Math.sqrt(dx*dx + dy*dy);
+              
+              if (distance < 10) { // Pin click radius
+                if (pin.nodeId) {
+                  setWireStart({
+                    nodeId: pin.nodeId,
+                    x: pinPos.x,
+                    y: pinPos.y
+                  });
+                  setWireEnd(coords);
+                  return;
+                }
+              }
+            }
+          }
+        }
+        
+        // If clicked elsewhere, cancel wire drawing
+        setIsDrawingWire(false);
+        setWireStart(null);
+        setWireEnd(null);
+        return;
+      }
+      
       // Check if clicked on a component
       if (simulationState) {
         // Find component under mouse
-        // This is simplified - a real implementation would need proper hit testing
         const component = simulationState.components.find(comp => {
           const dx = comp.position.x - coords.x;
           const dy = comp.position.y - coords.y;
@@ -155,6 +226,30 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
           };
           selectComponent(component.id);
         } else {
+          // Check if clicked on a pin to start drawing a wire
+          for (const comp of simulationState.components) {
+            for (const pin of comp.pins) {
+              // Calculate actual pin position
+              const pinPos = calculatePinPosition(comp, pin);
+              const dx = pinPos.x - coords.x;
+              const dy = pinPos.y - coords.y;
+              const distance = Math.sqrt(dx*dx + dy*dy);
+              
+              if (distance < 10) { // Pin click radius
+                if (pin.nodeId) {
+                  setIsDrawingWire(true);
+                  setWireStart({
+                    nodeId: pin.nodeId,
+                    x: pinPos.x,
+                    y: pinPos.y
+                  });
+                  setWireEnd(coords);
+                  return;
+                }
+              }
+            }
+          }
+          
           // Clicked on empty area - deselect
           selectComponent(null);
         }
@@ -163,6 +258,44 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
     
     const handleMouseMove = (e: MouseEvent) => {
       const coords = getCanvasCoords(e);
+      
+      // Update wire end position if drawing a wire
+      if (isDrawingWire && wireStart) {
+        setWireEnd(coords);
+        
+        // Check if hovering over a valid node to connect to
+        let foundNode = false;
+        if (simulationState) {
+          for (const comp of simulationState.components) {
+            for (const pin of comp.pins) {
+              // Skip if pin doesn't have a node ID or is the same as start
+              if (!pin.nodeId || (wireStart && pin.nodeId === wireStart.nodeId)) continue;
+              
+              // Calculate actual pin position
+              const pinPos = calculatePinPosition(comp, pin);
+              const dx = pinPos.x - coords.x;
+              const dy = pinPos.y - coords.y;
+              const distance = Math.sqrt(dx*dx + dy*dy);
+              
+              if (distance < 10) { // Pin hover radius
+                setHoveredNode({
+                  componentId: comp.id,
+                  nodeId: pin.nodeId
+                });
+                foundNode = true;
+                break;
+              }
+            }
+            if (foundNode) break;
+          }
+        }
+        
+        if (!foundNode) {
+          setHoveredNode(null);
+        }
+        
+        return;
+      }
       
       // Update position of dragged component
       if (isDragging && draggedComponentId && simulationState) {
@@ -173,7 +306,7 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
             y: coords.y - dragOffset.y
           };
           
-          // Move the component
+          // Update component position in engine
           component.position = newPosition;
           
           // Update rendering
@@ -183,12 +316,44 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
             simulationState.wires
           );
         }
+      } else {
+        // Check if hovering over a pin
+        let foundNode = false;
+        if (simulationState) {
+          for (const comp of simulationState.components) {
+            for (const pin of comp.pins) {
+              if (!pin.nodeId) continue;
+              
+              // Calculate actual pin position
+              const pinPos = calculatePinPosition(comp, pin);
+              const dx = pinPos.x - coords.x;
+              const dy = pinPos.y - coords.y;
+              const distance = Math.sqrt(dx*dx + dy*dy);
+              
+              if (distance < 10) { // Pin hover radius
+                setHoveredNode({
+                  componentId: comp.id,
+                  nodeId: pin.nodeId
+                });
+                canvas.style.cursor = 'crosshair';
+                foundNode = true;
+                break;
+              }
+            }
+            if (foundNode) break;
+          }
+        }
+        
+        if (!foundNode) {
+          setHoveredNode(null);
+          canvas.style.cursor = selectedComponentType ? 'crosshair' : 'default';
+        }
       }
     };
     
     const handleMouseUp = (e: MouseEvent) => {
+      // Reset dragging state
       if (isDragging && draggedComponentId) {
-        // Finalize component position
         isDragging = false;
         draggedComponentId = null;
       }
@@ -205,7 +370,28 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [simulationState, engine, renderer]);
+  }, [simulationState, engine, renderer, selectedComponentType, isDrawingWire, wireStart, hoveredNode]);
+
+  // Helper function to calculate pin position with component rotation
+  const calculatePinPosition = (component: Component, pin: any) => {
+    const angle = (component.rotation || 0) * Math.PI / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    
+    // Pin position is relative to component position
+    const relX = pin.position.x - component.position.x;
+    const relY = pin.position.y - component.position.y;
+    
+    // Apply rotation
+    const rotX = relX * cos - relY * sin;
+    const rotY = relX * sin + relY * cos;
+    
+    // Return absolute position
+    return {
+      x: component.position.x + rotX,
+      y: component.position.y + rotY
+    };
+  };
 
   const handleComponentSelect = (type: string) => {
     setSelectedComponentType(prev => prev === type ? null : type);
@@ -259,6 +445,35 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
         className="circuit-canvas w-full h-full"
         style={{ cursor: selectedComponentType ? 'crosshair' : 'default' }}
       />
+
+      {/* Wire drawing overlay */}
+      {isDrawingWire && wireStart && wireEnd && (
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 5 }}
+        >
+          <line
+            x1={wireStart.x}
+            y1={wireStart.y}
+            x2={wireEnd.x}
+            y2={wireEnd.y}
+            stroke={hoveredNode ? "#0088ff" : "#888"}
+            strokeWidth={2}
+            strokeDasharray={hoveredNode ? "" : "5,5"}
+          />
+        </svg>
+      )}
+
+      {/* Node hover indicator */}
+      {hoveredNode && !isDrawingWire && (
+        <div 
+          className="absolute w-3 h-3 bg-blue-400 rounded-full pointer-events-none"
+          style={{ 
+            zIndex: 10,
+            // We'd calculate the actual position here based on the component and pin
+          }}
+        />
+      )}
 
       <CircuitControls />
     </div>

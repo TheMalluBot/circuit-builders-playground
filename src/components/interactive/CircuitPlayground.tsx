@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -258,21 +257,173 @@ const formatResistance = (ohms: number): string => {
   }
 };
 
-const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
+const CircuitCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { 
+    addComponent, 
+    selectComponent, 
+    moveComponent,
+    toggleSwitch,
+    engine,
+    renderer,
+    simulationState,
+    isRunning,
+    selectedComponent
+  } = useSimulation();
+  
+  const [draggingPlacedComponentId, setDraggingPlacedComponentId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [wireStart, setWireStart] = useState<{
+    nodeId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [tempWireEnd, setTempWireEnd] = useState<{x: number, y: number} | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Implement delete selected component
-      } else if (e.key === 'r' || e.key === 'R') {
-        // Implement rotate selected component
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const getCanvasCoords = (e: MouseEvent): {x: number, y: number} => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!simulationState) return;
+      
+      const coords = getCanvasCoords(e);
+      
+      if (hoveredNodeId) {
+        setWireStart({
+          nodeId: hoveredNodeId,
+          x: coords.x,
+          y: coords.y
+        });
+        setTempWireEnd(coords);
+        return;
+      }
+      
+      for (const comp of simulationState.components) {
+        const dx = comp.position.x - coords.x;
+        const dy = comp.position.y - coords.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 30) {
+          if (isRunning && comp.type === 'switch') {
+            toggleSwitch(comp.id);
+            return;
+          }
+          
+          selectComponent(comp.id);
+          setDraggingPlacedComponentId(comp.id);
+          setDragOffset({
+            x: coords.x - comp.position.x,
+            y: coords.y - comp.position.y
+          });
+          return;
+        }
+      }
+      
+      selectComponent(null);
+    };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const coords = getCanvasCoords(e);
+      
+      if (wireStart) {
+        setTempWireEnd(coords);
+        
+        let foundNode = false;
+        if (simulationState) {
+          for (const comp of simulationState.components) {
+            for (const pin of comp.pins) {
+              const pinPos = getPinPosition(comp, pin);
+              const dx = pinPos.x - coords.x;
+              const dy = pinPos.y - coords.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distance < 10) {
+                if (pin.nodeId !== wireStart.nodeId) {
+                  setHoveredNodeId(pin.nodeId || `${comp.id}-${pin.id}`);
+                  foundNode = true;
+                  break;
+                }
+              }
+            }
+            if (foundNode) break;
+          }
+        }
+        
+        if (!foundNode) {
+          setHoveredNodeId(null);
+        }
+        return;
+      }
+      
+      if (draggingPlacedComponentId && simulationState) {
+        const newPos = {
+          x: coords.x - dragOffset.x,
+          y: coords.y - dragOffset.y
+        };
+        
+        moveComponent(draggingPlacedComponentId, newPos);
+        return;
+      }
+      
+      let foundNode = false;
+      if (simulationState) {
+        for (const comp of simulationState.components) {
+          for (const pin of comp.pins) {
+            const pinPos = getPinPosition(comp, pin);
+            const dx = pinPos.x - coords.x;
+            const dy = pinPos.y - coords.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 10) {
+              setHoveredNodeId(pin.nodeId || `${comp.id}-${pin.id}`);
+              foundNode = true;
+              break;
+            }
+          }
+          if (foundNode) break;
+        }
+      }
+      
+      if (!foundNode) {
+        setHoveredNodeId(null);
       }
     };
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    const handleMouseUp = (e: MouseEvent) => {
+      if (wireStart && hoveredNodeId && wireStart.nodeId !== hoveredNodeId) {
+        setTimeout(() => {
+          if (engine && wireStart && hoveredNodeId) {
+            engine.createWire(wireStart.nodeId, hoveredNodeId);
+          }
+        }, 0);
+      }
+      
+      setWireStart(null);
+      setTempWireEnd(null);
+      
+      setDraggingPlacedComponentId(null);
+    };
+    
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [simulationState, wireStart, hoveredNodeId, draggingPlacedComponentId, dragOffset, engine, selectComponent, moveComponent, isRunning, toggleSwitch]);
   
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -283,7 +434,7 @@ const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
-      // Add component at position (x, y)
+      addComponent(componentType.toLowerCase(), { x, y });
     }
   };
   
@@ -291,17 +442,92 @@ const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   };
+  
+  const getPinPosition = (component: any, pin: any) => {
+    const rad = (component.rotation || 0) * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    
+    const dx = pin.position.x - component.position.x;
+    const dy = pin.position.y - component.position.y;
+    
+    const rotatedX = dx * cos - dy * sin;
+    const rotatedY = dx * sin + dy * cos;
+    
+    return {
+      x: component.position.x + rotatedX,
+      y: component.position.y + rotatedY
+    };
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      <canvas 
+        ref={canvasRef} 
+        className="w-full h-full bg-gray-50 simulator-grid"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      />
+      
+      {wireStart && tempWireEnd && (
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 10 }}
+        >
+          <line
+            x1={wireStart.x}
+            y1={wireStart.y}
+            x2={tempWireEnd.x}
+            y2={tempWireEnd.y}
+            stroke={hoveredNodeId ? "#0088ff" : "#888"}
+            strokeWidth="2"
+            strokeDasharray={hoveredNodeId ? "" : "5,5"}
+          />
+        </svg>
+      )}
+      
+      {hoveredNodeId && !wireStart && simulationState && (
+        <div 
+          className="absolute w-3 h-3 bg-blue-500 rounded-full pointer-events-none"
+          style={{ 
+            left: getNodePosition(hoveredNodeId, simulationState).x - 6, 
+            top: getNodePosition(hoveredNodeId, simulationState).y - 6,
+            zIndex: 5
+          }}
+        />
+      )}
+      
+      {function getNodePosition(nodeId: string, state: any) {
+        for (const comp of state.components) {
+          for (const pin of comp.pins) {
+            if (pin.nodeId === nodeId || `${comp.id}-${pin.id}` === nodeId) {
+              return getPinPosition(comp, pin);
+            }
+          }
+        }
+        return { x: 0, y: 0 };
+      }}
+    </div>
+  );
+};
+
+const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+      } else if (e.key === 'r' || e.key === 'R') {
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className={`grid grid-cols-5 gap-4 ${className}`}>
       <div className="col-span-4 bg-white border border-gray-200 rounded-lg overflow-hidden h-[600px] relative">
         <SimulationProvider>
-          <canvas 
-            ref={canvasRef} 
-            className="w-full h-full bg-gray-50"
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-          />
+          <CircuitCanvas />
           <div className="absolute bottom-4 right-4 flex gap-2">
             <Button
               variant="secondary"
@@ -328,12 +554,16 @@ const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
         
         <div>
           <h3 className="font-medium text-sm mb-2">Controls</h3>
-          <CircuitControls />
+          <SimulationProvider>
+            <CircuitControls />
+          </SimulationProvider>
         </div>
         
         <div>
           <h3 className="font-medium text-sm mb-2">Properties</h3>
-          <PropertyPanel />
+          <SimulationProvider>
+            <PropertyPanel />
+          </SimulationProvider>
         </div>
       </div>
     </div>

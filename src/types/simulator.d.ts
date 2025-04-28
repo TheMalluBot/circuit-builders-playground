@@ -41,3 +41,22 @@ export interface DragInfo {
   offsetX: number;
   offsetY: number;
 }
+
+export interface NodePosition {
+  x: number;
+  y: number;
+}
+
+export interface PinConnection {
+  componentId: string;
+  pinId: string;
+  nodeId: string;
+}
+
+export interface WireConnectionState {
+  isConnecting: boolean;
+  startNodeId: string | null;
+  startPos: NodePosition | null;
+  endPos: NodePosition | null;
+  hoveredNodeId: string | null;
+}

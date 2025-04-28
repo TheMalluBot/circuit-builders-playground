@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Save,
@@ -7,6 +7,7 @@ import {
   Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -16,6 +17,7 @@ import { SimulationActivity } from '@/types/simulator';
 const PlaygroundPage = () => {
   const [simulatorState, setSimulatorState] = useState('empty');
   const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const simulationActivity: SimulationActivity = {
     title: "Circuit Playground",
@@ -47,6 +49,11 @@ const PlaygroundPage = () => {
   
   const handleStateChange = (state: string) => {
     setSimulatorState(state);
+    toast({
+      title: "Circuit Template Loaded",
+      description: `Loaded the ${state} circuit template.`,
+      duration: 3000
+    });
   };
   
   return (
@@ -117,19 +124,19 @@ const PlaygroundPage = () => {
               <div>
                 <h3 className="font-medium mb-2">1. Choose Components</h3>
                 <p className="text-sm text-muted-foreground">
-                  Drag components from the panel onto the workspace or click the component and then the canvas.
+                  Drag components from the panel onto the workspace. Each component has specific electrical properties.
                 </p>
               </div>
               <div>
                 <h3 className="font-medium mb-2">2. Make Connections</h3>
                 <p className="text-sm text-muted-foreground">
-                  Click on a pin and drag to another pin to create a wire connection.
+                  Click on a pin (connection point) and drag to another pin to create a wire connection between components.
                 </p>
               </div>
               <div>
                 <h3 className="font-medium mb-2">3. Run Simulation</h3>
                 <p className="text-sm text-muted-foreground">
-                  Click the Run button to see how your circuit behaves in real-time.
+                  Click the Run button to see how your circuit behaves in real-time. Toggle switches and adjust component values.
                 </p>
               </div>
             </div>
