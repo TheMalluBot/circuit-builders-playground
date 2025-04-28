@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -264,6 +265,7 @@ const CircuitCanvas: React.FC = () => {
     selectComponent, 
     moveComponent,
     toggleSwitch,
+    createWire,
     engine,
     renderer,
     simulationState,
@@ -402,8 +404,9 @@ const CircuitCanvas: React.FC = () => {
     const handleMouseUp = (e: MouseEvent) => {
       if (wireStart && hoveredNodeId && wireStart.nodeId !== hoveredNodeId) {
         setTimeout(() => {
-          if (engine && wireStart && hoveredNodeId) {
-            engine.createWire(wireStart.nodeId, hoveredNodeId);
+          if (wireStart && hoveredNodeId) {
+            // Fix: Use createWire from context, not from engine
+            createWire(wireStart.nodeId, hoveredNodeId);
           }
         }, 0);
       }
@@ -423,7 +426,7 @@ const CircuitCanvas: React.FC = () => {
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [simulationState, wireStart, hoveredNodeId, draggingPlacedComponentId, dragOffset, engine, selectComponent, moveComponent, isRunning, toggleSwitch]);
+  }, [simulationState, wireStart, hoveredNodeId, draggingPlacedComponentId, dragOffset, engine, selectComponent, moveComponent, isRunning, toggleSwitch, createWire]);
   
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -458,6 +461,18 @@ const CircuitCanvas: React.FC = () => {
       x: component.position.x + rotatedX,
       y: component.position.y + rotatedY
     };
+  };
+  
+  // Fix: Define getNodePosition function explicitly
+  const getNodePosition = (nodeId: string, state: any) => {
+    for (const comp of state.components) {
+      for (const pin of comp.pins) {
+        if (pin.nodeId === nodeId || `${comp.id}-${pin.id}` === nodeId) {
+          return getPinPosition(comp, pin);
+        }
+      }
+    }
+    return { x: 0, y: 0 };
   };
 
   return (
@@ -497,16 +512,7 @@ const CircuitCanvas: React.FC = () => {
         />
       )}
       
-      {function getNodePosition(nodeId: string, state: any) {
-        for (const comp of state.components) {
-          for (const pin of comp.pins) {
-            if (pin.nodeId === nodeId || `${comp.id}-${pin.id}` === nodeId) {
-              return getPinPosition(comp, pin);
-            }
-          }
-        }
-        return { x: 0, y: 0 };
-      }}
+      {/* Fix: Convert function to element by wrapping in fragment */}
     </div>
   );
 };
@@ -571,3 +577,4 @@ const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
 };
 
 export default CircuitPlayground;
+
