@@ -40,6 +40,7 @@ export interface DragInfo {
   type: string;
   offsetX: number;
   offsetY: number;
+  isPaletteDrag?: boolean;
 }
 
 export interface NodePosition {
@@ -60,3 +61,4 @@ export interface WireConnectionState {
   endPos: NodePosition | null;
   hoveredNodeId: string | null;
 }
+

@@ -12,7 +12,10 @@ export class ComponentFactory {
     position: { x: number; y: number },
     properties: Record<string, any> = {}
   ): Component | null {
-    switch (type.toLowerCase()) {
+    // Normalize the component type to handle case differences and shortcuts
+    const normalizedType = type.toLowerCase().trim();
+    
+    switch (normalizedType) {
       case 'dcvoltagesource':
       case 'battery':
         return new DCVoltageSource(id, position, properties.voltage || 5);
@@ -43,7 +46,10 @@ export class ComponentFactory {
     category: string;
     defaultProperties: Record<string, any>
   } {
-    switch (type.toLowerCase()) {
+    // Normalize the component type
+    const normalizedType = type.toLowerCase().trim();
+    
+    switch (normalizedType) {
       case 'dcvoltagesource':
       case 'battery':
         return {
@@ -87,3 +93,4 @@ export class ComponentFactory {
     }
   }
 }
+

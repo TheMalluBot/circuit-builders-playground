@@ -4,10 +4,17 @@ import { Link } from 'react-router-dom';
 import { 
   Save,
   Download,
-  Upload
+  Upload,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -119,7 +126,21 @@ const PlaygroundPage = () => {
           </div>
           
           <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mt-8">
-            <h2 className="text-xl font-bold mb-4">Getting Started with the Circuit Playground</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Getting Started with the Circuit Playground</h2>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Info className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Drag components from the palette and drop them onto the canvas to build your circuit</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <h3 className="font-medium mb-2">1. Choose Components</h3>

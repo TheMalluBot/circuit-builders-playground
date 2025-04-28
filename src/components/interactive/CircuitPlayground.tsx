@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -11,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { SimulationProvider, useSimulation } from '@/lib/simulator/SimulationContext';
-import { type CircuitComponentProps } from '@/types/simulator';
+import { type CircuitComponentProps, type DragInfo } from '@/types/simulator';
 
 interface CircuitPlaygroundProps {
   className?: string;
@@ -23,9 +22,23 @@ const ComponentPalette: React.FC = () => {
 
   const handleDragStart = (type: string, e: React.DragEvent) => {
     setDraggingComponent(type);
-    // Set drag image and data
     e.dataTransfer.setData('component/type', type);
     e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleMouseDown = (type: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const dragStartEvent = new CustomEvent('component-drag-start', {
+      detail: {
+        type: type,
+        clientX: e.clientX,
+        clientY: e.clientY
+      },
+      bubbles: true
+    });
+    
+    e.currentTarget.dispatchEvent(dragStartEvent);
   };
 
   const components: CircuitComponentProps[] = [
@@ -42,6 +55,7 @@ const ComponentPalette: React.FC = () => {
           key={comp.name}
           draggable
           onDragStart={(e) => handleDragStart(comp.name.toLowerCase(), e)}
+          onMouseDown={(e) => handleMouseDown(comp.name.toLowerCase(), e)}
           className="flex flex-col items-center p-2 rounded-md bg-gray-50 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors"
         >
           <img src={comp.icon} alt={comp.name} className="w-8 h-8 mb-1" />
@@ -141,7 +155,6 @@ const PropertyPanel: React.FC = () => {
     );
   }
 
-  // Render different property editors based on component type
   const renderPropertyEditors = () => {
     switch (selectedComponent.type) {
       case 'battery':
@@ -247,7 +260,6 @@ const PropertyPanel: React.FC = () => {
   );
 };
 
-// Helper function to format resistance values
 const formatResistance = (ohms: number): string => {
   if (ohms >= 1000000) {
     return `${(ohms / 1000000).toFixed(1)}MΩ`;
@@ -275,6 +287,8 @@ const CircuitCanvas: React.FC = () => {
   
   const [draggingPlacedComponentId, setDraggingPlacedComponentId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [paletteDragInfo, setPaletteDragInfo] = useState<DragInfo | null>(null);
+  const [ghostPosition, setGhostPosition] = useState<{x: number, y: number} | null>(null);
   const [wireStart, setWireStart] = useState<{
     nodeId: string;
     x: number;
@@ -284,17 +298,81 @@ const CircuitCanvas: React.FC = () => {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   
   useEffect(() => {
+    const handleComponentDragStart = (e: CustomEvent) => {
+      const { type, clientX, clientY } = e.detail;
+      
+      setPaletteDragInfo({
+        type,
+        offsetX: 30,
+        offsetY: 30,
+        isPaletteDrag: true
+      });
+      
+      setGhostPosition({
+        x: clientX,
+        y: clientY
+      });
+      
+      document.addEventListener('mousemove', handlePaletteDragMove);
+      document.addEventListener('mouseup', handlePaletteDragEnd);
+    };
+    
+    const handlePaletteDragMove = (e: MouseEvent) => {
+      if (ghostPosition) {
+        setGhostPosition({
+          x: e.clientX,
+          y: e.clientY
+        });
+      }
+    };
+    
+    const handlePaletteDragEnd = (e: MouseEvent) => {
+      if (paletteDragInfo && ghostPosition && canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        
+        if (
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom
+        ) {
+          const canvasX = e.clientX - rect.left;
+          const canvasY = e.clientY - rect.top;
+          
+          const id = `${paletteDragInfo.type}_${Date.now()}`;
+          
+          addComponent(paletteDragInfo.type, { x: canvasX, y: canvasY });
+        }
+      }
+      
+      setPaletteDragInfo(null);
+      setGhostPosition(null);
+      
+      document.removeEventListener('mousemove', handlePaletteDragMove);
+      document.removeEventListener('mouseup', handlePaletteDragEnd);
+    };
+    
+    document.addEventListener('component-drag-start', handleComponentDragStart as EventListener);
+    
+    return () => {
+      document.removeEventListener('component-drag-start', handleComponentDragStart as EventListener);
+      document.removeEventListener('mousemove', handlePaletteDragMove);
+      document.removeEventListener('mouseup', handlePaletteDragEnd);
+    };
+  }, [addComponent, ghostPosition, paletteDragInfo]);
+  
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const getCanvasCoords = (e: MouseEvent): {x: number, y: number} => {
+    const getCanvasCoords = (e: MouseEvent): { x: number, y: number } => {
       const rect = canvas.getBoundingClientRect();
       return {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       };
     };
-    
+
     const handleMouseDown = (e: MouseEvent) => {
       if (!simulationState) return;
       
@@ -405,7 +483,6 @@ const CircuitCanvas: React.FC = () => {
       if (wireStart && hoveredNodeId && wireStart.nodeId !== hoveredNodeId) {
         setTimeout(() => {
           if (wireStart && hoveredNodeId) {
-            // Fix: Use createWire from context, not from engine
             createWire(wireStart.nodeId, hoveredNodeId);
           }
         }, 0);
@@ -463,7 +540,6 @@ const CircuitCanvas: React.FC = () => {
     };
   };
   
-  // Fix: Define getNodePosition function explicitly
   const getNodePosition = (nodeId: string, state: any) => {
     for (const comp of state.components) {
       for (const pin of comp.pins) {
@@ -483,6 +559,20 @@ const CircuitCanvas: React.FC = () => {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       />
+      
+      {ghostPosition && paletteDragInfo && (
+        <div 
+          className="absolute pointer-events-none z-50 w-16 h-16 bg-blue-100 border-2 border-dashed border-blue-500 rounded-md flex items-center justify-center"
+          style={{
+            left: ghostPosition.x - paletteDragInfo.offsetX,
+            top: ghostPosition.y - paletteDragInfo.offsetY
+          }}
+        >
+          <div className="text-blue-500 text-sm font-medium">
+            {paletteDragInfo.type.charAt(0).toUpperCase() + paletteDragInfo.type.slice(1)}
+          </div>
+        </div>
+      )}
       
       {wireStart && tempWireEnd && (
         <svg
@@ -511,8 +601,6 @@ const CircuitCanvas: React.FC = () => {
           }}
         />
       )}
-      
-      {/* Fix: Convert function to element by wrapping in fragment */}
     </div>
   );
 };
@@ -577,4 +665,3 @@ const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
 };
 
 export default CircuitPlayground;
-
