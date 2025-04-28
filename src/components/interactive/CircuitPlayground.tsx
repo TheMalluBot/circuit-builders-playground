@@ -1,0 +1,343 @@
+
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Play, 
+  Pause, 
+  RotateCcw,
+  Trash2, 
+  Zap,
+  RotateCw
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { SimulationProvider, useSimulation } from '@/lib/simulator/SimulationContext';
+import { type CircuitComponentProps } from '@/types/simulator';
+
+interface CircuitPlaygroundProps {
+  className?: string;
+}
+
+const ComponentPalette: React.FC = () => {
+  const { addComponent } = useSimulation();
+  const [draggingComponent, setDraggingComponent] = useState<string | null>(null);
+
+  const handleDragStart = (type: string, e: React.DragEvent) => {
+    setDraggingComponent(type);
+    // Set drag image and data
+    e.dataTransfer.setData('component/type', type);
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const components: CircuitComponentProps[] = [
+    { name: 'Battery', icon: '/placeholder.svg', description: 'DC power source' },
+    { name: 'Resistor', icon: '/placeholder.svg', description: 'Limits current flow' },
+    { name: 'LED', icon: '/placeholder.svg', description: 'Light emitting diode' },
+    { name: 'Switch', icon: '/placeholder.svg', description: 'Controls circuit flow' }
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 p-3 bg-white shadow-inner rounded-md">
+      {components.map((comp) => (
+        <div 
+          key={comp.name}
+          draggable
+          onDragStart={(e) => handleDragStart(comp.name.toLowerCase(), e)}
+          className="flex flex-col items-center p-2 rounded-md bg-gray-50 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors"
+        >
+          <img src={comp.icon} alt={comp.name} className="w-8 h-8 mb-1" />
+          <span className="text-xs font-medium">{comp.name}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CircuitControls: React.FC = () => {
+  const { 
+    isRunning, 
+    toggleSimulation, 
+    resetSimulation,
+    deleteSelectedComponent,
+    rotateSelectedComponent,
+    simulationSpeed,
+    setSimulationSpeed
+  } = useSimulation();
+
+  return (
+    <div className="flex flex-col gap-3 p-3 bg-white shadow-inner rounded-md">
+      <div className="flex gap-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={toggleSimulation}
+          className="flex-1"
+        >
+          {isRunning ? 
+            <><Pause className="w-4 h-4 mr-1" /> Pause</> : 
+            <><Play className="w-4 h-4 mr-1" /> Run</>
+          }
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={resetSimulation}
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
+      </div>
+      
+      <div className="flex gap-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={rotateSelectedComponent}
+        >
+          <RotateCw className="w-4 h-4 mr-1" />
+          Rotate
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={deleteSelectedComponent}
+          className="text-red-500"
+        >
+          <Trash2 className="w-4 h-4 mr-1" />
+          Delete
+        </Button>
+      </div>
+      
+      <div className="mt-2">
+        <label className="block text-xs text-gray-500 mb-1">Simulation Speed</label>
+        <div className="flex items-center gap-2">
+          <Zap className="w-3 h-3 text-gray-400" />
+          <Slider 
+            value={[simulationSpeed]} 
+            onValueChange={(value) => setSimulationSpeed(value[0])}
+            min={0.25}
+            max={2}
+            step={0.25}
+            className="flex-1"
+          />
+          <Zap className="w-5 h-5 text-blue-500" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PropertyPanel: React.FC = () => {
+  const { 
+    selectedComponent, 
+    updateComponentProperty
+  } = useSimulation();
+
+  if (!selectedComponent) {
+    return (
+      <div className="p-3 bg-white shadow-inner rounded-md text-center text-sm text-gray-500">
+        Select a component to view properties
+      </div>
+    );
+  }
+
+  // Render different property editors based on component type
+  const renderPropertyEditors = () => {
+    switch (selectedComponent.type) {
+      case 'battery':
+        return (
+          <>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Voltage (V)</label>
+              <div className="flex items-center gap-2">
+                <Slider 
+                  value={[selectedComponent.properties.voltage || 5]} 
+                  onValueChange={(value) => updateComponentProperty(selectedComponent.id, 'voltage', value[0])}
+                  min={1}
+                  max={12}
+                  step={0.5}
+                  className="flex-1"
+                />
+                <span className="text-xs font-mono w-8 text-right">{selectedComponent.properties.voltage || 5}V</span>
+              </div>
+            </div>
+          </>
+        );
+      
+      case 'resistor':
+        return (
+          <>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Resistance (Ω)</label>
+              <div className="flex items-center gap-2">
+                <Slider 
+                  value={[Math.log10(selectedComponent.properties.resistance || 1000)]} 
+                  onValueChange={(value) => updateComponentProperty(
+                    selectedComponent.id, 
+                    'resistance', 
+                    Math.pow(10, value[0])
+                  )}
+                  min={1}
+                  max={6}
+                  step={0.1}
+                  className="flex-1"
+                />
+                <span className="text-xs font-mono w-16 text-right">
+                  {formatResistance(selectedComponent.properties.resistance || 1000)}
+                </span>
+              </div>
+            </div>
+          </>
+        );
+      
+      case 'led':
+        return (
+          <>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Color</label>
+              <div className="flex gap-1 justify-between">
+                {['red', 'green', 'blue', 'yellow', 'white'].map(color => (
+                  <div 
+                    key={color} 
+                    className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
+                      (selectedComponent.properties.color || 'red') === color
+                        ? 'border-black dark:border-white'
+                        : 'border-transparent'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => updateComponentProperty(selectedComponent.id, 'color', color)}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        );
+      
+      case 'switch':
+        return (
+          <>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">State</label>
+              <Button 
+                variant={selectedComponent.properties.closed ? "default" : "outline"}
+                size="sm" 
+                className="w-full"
+                onClick={() => updateComponentProperty(
+                  selectedComponent.id, 
+                  'closed', 
+                  !selectedComponent.properties.closed
+                )}
+              >
+                {selectedComponent.properties.closed ? "Closed (ON)" : "Open (OFF)"}
+              </Button>
+            </div>
+          </>
+        );
+      
+      default:
+        return <div className="text-sm">No editable properties</div>;
+    }
+  };
+
+  return (
+    <div className="p-3 bg-white shadow-inner rounded-md">
+      <h3 className="font-medium text-sm mb-2">{selectedComponent.type.toUpperCase()} Properties</h3>
+      {renderPropertyEditors()}
+    </div>
+  );
+};
+
+// Helper function to format resistance values
+const formatResistance = (ohms: number): string => {
+  if (ohms >= 1000000) {
+    return `${(ohms / 1000000).toFixed(1)}MΩ`;
+  } else if (ohms >= 1000) {
+    return `${(ohms / 1000).toFixed(1)}kΩ`;
+  } else {
+    return `${ohms.toFixed(0)}Ω`;
+  }
+};
+
+const CircuitPlayground: React.FC<CircuitPlaygroundProps> = ({ className }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Implement delete selected component
+      } else if (e.key === 'r' || e.key === 'R') {
+        // Implement rotate selected component
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const componentType = e.dataTransfer.getData('component/type');
+    
+    if (componentType && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Add component at position (x, y)
+    }
+  };
+  
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  return (
+    <div className={`grid grid-cols-5 gap-4 ${className}`}>
+      <div className="col-span-4 bg-white border border-gray-200 rounded-lg overflow-hidden h-[600px] relative">
+        <SimulationProvider>
+          <canvas 
+            ref={canvasRef} 
+            className="w-full h-full bg-gray-50"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          />
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="bg-white/90 backdrop-blur-sm"
+            >
+              Toggle Grid
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="bg-white/90 backdrop-blur-sm"
+            >
+              Toggle Measurements
+            </Button>
+          </div>
+        </SimulationProvider>
+      </div>
+      <div className="col-span-1 flex flex-col gap-4">
+        <div>
+          <h3 className="font-medium text-sm mb-2">Components</h3>
+          <ComponentPalette />
+        </div>
+        
+        <div>
+          <h3 className="font-medium text-sm mb-2">Controls</h3>
+          <CircuitControls />
+        </div>
+        
+        <div>
+          <h3 className="font-medium text-sm mb-2">Properties</h3>
+          <PropertyPanel />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CircuitPlayground;

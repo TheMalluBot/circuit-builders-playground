@@ -1,3 +1,4 @@
+
 import { Component, Node, Wire, Connection, Pin, MatrixContribution, SimulationState } from './types';
 
 export class CircuitEngine {
@@ -7,6 +8,8 @@ export class CircuitEngine {
   private time: number = 0;
   private running: boolean = false;
   private lastUpdateTime: number = 0;
+  private simulationSpeed: number = 1.0;
+  private changeListeners: Function[] = [];
   
   constructor() {
     this.lastUpdateTime = performance.now();
@@ -15,6 +18,7 @@ export class CircuitEngine {
   addComponent(component: Component): void {
     this.components.push(component);
     this.rebuildCircuit();
+    this.notifyChangeListeners();
   }
   
   removeComponent(componentId: string): void {
@@ -30,6 +34,7 @@ export class CircuitEngine {
     
     this.components = this.components.filter(c => c.id !== componentId);
     this.rebuildCircuit();
+    this.notifyChangeListeners();
   }
   
   connectPins(pin1: Pin, pin2: Pin): void {
@@ -60,6 +65,7 @@ export class CircuitEngine {
     }
     
     this.rebuildCircuit();
+    this.notifyChangeListeners();
   }
   
   disconnectPin(pin: Pin): void {
@@ -83,6 +89,8 @@ export class CircuitEngine {
       // If only one connection remains, check if we need to reconsider the topology
       this.rebuildCircuit();
     }
+    
+    this.notifyChangeListeners();
   }
   
   start(): void {
@@ -115,22 +123,57 @@ export class CircuitEngine {
     }
     
     this.time = 0;
+    this.notifyChangeListeners();
   }
   
+  setSimulationSpeed(speed: number): void {
+    this.simulationSpeed = Math.max(0.1, Math.min(10, speed));
+  }
+  
+  // Add a change listener to get notifications when circuit state changes
+  addChangeListener(listener: Function): void {
+    if (!this.changeListeners.includes(listener)) {
+      this.changeListeners.push(listener);
+    }
+  }
+  
+  // Remove a change listener
+  removeChangeListener(listener: Function): void {
+    this.changeListeners = this.changeListeners.filter(l => l !== listener);
+  }
+  
+  // Notify all listeners of state changes
+  private notifyChangeListeners(): void {
+    for (const listener of this.changeListeners) {
+      listener(this.getState());
+    }
+  }
+  
+  // Get a specific node by ID
+  getNode(nodeId: string): Node | undefined {
+    return this.nodes.get(nodeId);
+  }
+
   private simulationLoop(timestamp: number): void {
     if (!this.running) return;
     
     const deltaTime = (timestamp - this.lastUpdateTime) / 1000; // Convert to seconds
     this.lastUpdateTime = timestamp;
     
+    // Apply simulation speed factor
+    const adjustedTimeStep = deltaTime * this.simulationSpeed;
+    
     // Limit time step to avoid instability with large steps
-    const timeStep = Math.min(deltaTime, 0.02); // Maximum 20ms step
+    const timeStep = Math.min(adjustedTimeStep, 0.02 * this.simulationSpeed); // Maximum 20ms step
     
     // Perform simulation step
     this.step(timeStep);
     
     // Update wires with current values
     this.updateWireCurrents();
+    
+    // Notify listeners
+    this.notifyChangeListeners();
     
     // Schedule next frame
     requestAnimationFrame(this.simulationLoop.bind(this));

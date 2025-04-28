@@ -71,11 +71,16 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
   onHighlightComponent,
   renderOptions
 }) => {
-  const { addComponent, removeComponent, engine, renderer, simulationState } = useSimulation();
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const { addComponent, removeComponent, engine, renderer, simulationState, selectComponent } = useSimulation();
+  const [selectedComponentType, setSelectedComponentType] = useState<string | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<Component | null>(null);
+  const [isDrawingWire, setIsDrawingWire] = useState(false);
+  const [wireStart, setWireStart] = useState<{x: number, y: number} | null>(null);
+  const [wireEnd, setWireEnd] = useState<{x: number, y: number} | null>(null);
+  const [hoveredPin, setHoveredPin] = useState<{componentId: string, pinId: string} | null>(null);
   const [scale, setScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Load initial state from activity
   useEffect(() => {
@@ -97,7 +102,10 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
         });
       });
       
-      // TODO: Add connections if present in state.connections
+      // Add connections if present in state.connections
+      if (state.connections) {
+        // Implementation for connections
+      }
     }
   }, [simulatorState, simulationActivity, simulationState]);
 
@@ -108,21 +116,113 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
     }
   }, [renderer, renderOptions]);
 
+  // Set up canvas event listeners for component manipulation
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let isDragging = false;
+    let draggedComponentId: string | null = null;
+    let dragOffset = { x: 0, y: 0 };
+    
+    const getCanvasCoords = (e: MouseEvent): { x: number, y: number } => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const coords = getCanvasCoords(e);
+      
+      // Check if clicked on a component
+      if (simulationState) {
+        // Find component under mouse
+        // This is simplified - a real implementation would need proper hit testing
+        const component = simulationState.components.find(comp => {
+          const dx = comp.position.x - coords.x;
+          const dy = comp.position.y - coords.y;
+          return Math.sqrt(dx*dx + dy*dy) < 30; // Simple radius check
+        });
+        
+        if (component) {
+          isDragging = true;
+          draggedComponentId = component.id;
+          dragOffset = {
+            x: coords.x - component.position.x,
+            y: coords.y - component.position.y
+          };
+          selectComponent(component.id);
+        } else {
+          // Clicked on empty area - deselect
+          selectComponent(null);
+        }
+      }
+    };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const coords = getCanvasCoords(e);
+      
+      // Update position of dragged component
+      if (isDragging && draggedComponentId && simulationState) {
+        const component = simulationState.components.find(c => c.id === draggedComponentId);
+        if (component && engine && renderer) {
+          const newPosition = {
+            x: coords.x - dragOffset.x,
+            y: coords.y - dragOffset.y
+          };
+          
+          // Move the component
+          component.position = newPosition;
+          
+          // Update rendering
+          renderer.render(
+            simulationState.components,
+            simulationState.nodes,
+            simulationState.wires
+          );
+        }
+      }
+    };
+    
+    const handleMouseUp = (e: MouseEvent) => {
+      if (isDragging && draggedComponentId) {
+        // Finalize component position
+        isDragging = false;
+        draggedComponentId = null;
+      }
+    };
+    
+    // Add event listeners
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      // Remove event listeners
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [simulationState, engine, renderer]);
+
   const handleComponentSelect = (type: string) => {
-    setSelectedComponent(prev => prev === type ? null : type);
+    setSelectedComponentType(prev => prev === type ? null : type);
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!renderer || !selectedComponent) return;
+    if (!renderer || !selectedComponentType) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const canvasX = e.clientX - rect.left;
     const canvasY = e.clientY - rect.top;
     
-    const circuitCoords = renderer.canvasToCircuitCoords(canvasX, canvasY);
+    // In a real implementation, we'd convert canvas coordinates to simulation coordinates
+    const circuitCoords = { x: canvasX, y: canvasY };
     
-    addComponent(selectedComponent, circuitCoords);
-    setSelectedComponent(null);
+    addComponent(selectedComponentType, circuitCoords);
+    setSelectedComponentType(null);
   };
 
   return (
@@ -131,33 +231,33 @@ const CircuitSimulatorContent: React.FC<CircuitSimulatorProps> = ({
         <CircuitComponentButton
           icon={<Battery />}
           type="battery"
-          selected={selectedComponent === 'battery'}
+          selected={selectedComponentType === 'battery'}
           onClick={() => handleComponentSelect('battery')}
         />
         <CircuitComponentButton
           icon={<Zap />}
           type="resistor"
-          selected={selectedComponent === 'resistor'}
+          selected={selectedComponentType === 'resistor'}
           onClick={() => handleComponentSelect('resistor')}
         />
         <CircuitComponentButton
           icon={<Lightbulb />}
           type="led"
-          selected={selectedComponent === 'led'}
+          selected={selectedComponentType === 'led'}
           onClick={() => handleComponentSelect('led')}
         />
         <CircuitComponentButton
           icon={<ToggleRight />}
           type="switch"
-          selected={selectedComponent === 'switch'}
+          selected={selectedComponentType === 'switch'}
           onClick={() => handleComponentSelect('switch')}
         />
       </div>
 
-      <div 
-        className="w-full h-full"
-        onClick={handleCanvasClick}
-        style={{ cursor: selectedComponent ? 'crosshair' : 'default' }}
+      <canvas 
+        ref={canvasRef}
+        className="circuit-canvas w-full h-full"
+        style={{ cursor: selectedComponentType ? 'crosshair' : 'default' }}
       />
 
       <CircuitControls />

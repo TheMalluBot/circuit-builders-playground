@@ -35,3 +35,9 @@ export interface RenderOptions {
   animateCurrentFlow: boolean;
   theme: 'light' | 'dark';
 }
+
+export interface DragInfo {
+  type: string;
+  offsetX: number;
+  offsetY: number;
+}

@@ -23,6 +23,10 @@ export class CircuitRenderer {
   private particles: Map<string, Particle[]> = new Map();
   private lastRenderTime: number = 0;
   private componentImages: Map<string, HTMLImageElement> = new Map();
+  private selectedComponentId: string | null = null;
+  private hoveredPinId: {componentId: string, pinId: string} | null = null;
+  private wireStartPin: {componentId: string, pinId: string, position: {x: number, y: number}} | null = null;
+  private wireEndPosition: {x: number, y: number} | null = null;
   
   constructor(canvas: HTMLCanvasElement, options: Partial<RenderOptions> = {}) {
     this.canvas = canvas;
@@ -43,6 +47,9 @@ export class CircuitRenderer {
     
     // Add resize listener
     window.addEventListener('resize', this.resizeCanvas.bind(this));
+    
+    // Set up mouse events for interactivity
+    this.setupMouseEvents();
   }
   
   private resizeCanvas() {
@@ -82,6 +89,36 @@ export class CircuitRenderer {
     };
   }
   
+  // Set the currently selected component
+  setSelectedComponent(componentId: string | null): void {
+    this.selectedComponentId = componentId;
+  }
+  
+  // Set the currently hovered pin
+  setHoveredPin(componentId: string | null, pinId: string | null): void {
+    if (componentId && pinId) {
+      this.hoveredPinId = { componentId, pinId };
+    } else {
+      this.hoveredPinId = null;
+    }
+  }
+  
+  // Start drawing a wire from a pin
+  startWire(componentId: string, pinId: string, position: {x: number, y: number}): void {
+    this.wireStartPin = { componentId, pinId, position };
+  }
+  
+  // Update the end position of the wire being drawn
+  updateWireEnd(position: {x: number, y: number}): void {
+    this.wireEndPosition = position;
+  }
+  
+  // Cancel wire drawing
+  cancelWire(): void {
+    this.wireStartPin = null;
+    this.wireEndPosition = null;
+  }
+  
   // Find actual positions of pins in the canvas coordinate system
   getPinPositions(component: Component): {id: string, x: number, y: number}[] {
     return component.pins.map(pin => {
@@ -106,6 +143,101 @@ export class CircuitRenderer {
     });
   }
   
+  // Check if a point is near a pin
+  isPinHit(x: number, y: number, component: Component, pinId: string): boolean {
+    const pins = this.getPinPositions(component);
+    const pin = pins.find(p => p.id === pinId);
+    
+    if (!pin) return false;
+    
+    const dx = pin.x - x;
+    const dy = pin.y - y;
+    const distance = Math.sqrt(dx*dx + dy*dy);
+    
+    return distance < 10; // 10 pixels hit radius
+  }
+  
+  // Find a pin at the given canvas coordinates
+  findPinAt(x: number, y: number, components: Component[]): {componentId: string, pinId: string} | null {
+    for (const component of components) {
+      for (const pin of component.pins) {
+        if (this.isPinHit(x, y, component, pin.id)) {
+          return { componentId: component.id, pinId: pin.id };
+        }
+      }
+    }
+    return null;
+  }
+  
+  // Set up mouse events for interactive features
+  private setupMouseEvents(): void {
+    let isDragging = false;
+    let lastMousePosition = {x: 0, y: 0};
+    
+    const getMousePosition = (e: MouseEvent): {x: number, y: number} => {
+      const rect = this.canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+    
+    this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
+      const pos = getMousePosition(e);
+      lastMousePosition = pos;
+      
+      // Middle button for panning
+      if (e.button === 1) {
+        isDragging = true;
+        this.canvas.style.cursor = 'grabbing';
+        e.preventDefault();
+      }
+    });
+    
+    this.canvas.addEventListener('mousemove', (e: MouseEvent) => {
+      const pos = getMousePosition(e);
+      
+      if (isDragging) {
+        // Update pan offset
+        this.panOffset.x += pos.x - lastMousePosition.x;
+        this.panOffset.y += pos.y - lastMousePosition.y;
+        lastMousePosition = pos;
+      }
+      
+      // Update wire end position if drawing a wire
+      if (this.wireStartPin && this.wireEndPosition) {
+        this.wireEndPosition = pos;
+      }
+    });
+    
+    this.canvas.addEventListener('mouseup', () => {
+      isDragging = false;
+      this.canvas.style.cursor = 'default';
+    });
+    
+    this.canvas.addEventListener('wheel', (e: WheelEvent) => {
+      // Calculate zoom factor
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      
+      // Get mouse position in circuit coordinates before zoom
+      const mousePos = getMousePosition(e);
+      const beforeZoomPos = this.canvasToCircuitCoords(mousePos.x, mousePos.y);
+      
+      // Apply zoom
+      this.scaleFactor *= zoomFactor;
+      this.scaleFactor = Math.max(0.25, Math.min(3, this.scaleFactor));
+      
+      // Get mouse position in circuit coordinates after zoom
+      const afterZoomPos = this.canvasToCircuitCoords(mousePos.x, mousePos.y);
+      
+      // Adjust pan offset to keep mouse position fixed
+      this.panOffset.x += (afterZoomPos.x - beforeZoomPos.x) * this.scaleFactor;
+      this.panOffset.y += (afterZoomPos.y - beforeZoomPos.y) * this.scaleFactor;
+      
+      e.preventDefault();
+    });
+  }
+  
   // Main render method
   render(components: Component[], nodes: Node[], wires: Wire[]): void {
     const now = performance.now();
@@ -127,6 +259,11 @@ export class CircuitRenderer {
     
     // Draw wires
     this.drawWires(wires, nodes);
+    
+    // Draw temporary wire being created
+    if (this.wireStartPin && this.wireEndPosition) {
+      this.drawTemporaryWire();
+    }
     
     // Draw wire current flow animations if enabled
     if (this.options.animateCurrentFlow) {
@@ -169,19 +306,42 @@ export class CircuitRenderer {
     this.ctx.lineWidth = 0.5;
     this.ctx.beginPath();
     
-    // Vertical lines
+    // Draw dots instead of lines for a lighter grid
     for (let x = startGridX; x <= endGridX; x += this.gridSize) {
-      this.ctx.moveTo(x, startGridY);
-      this.ctx.lineTo(x, endGridY);
-    }
-    
-    // Horizontal lines
-    for (let y = startGridY; y <= endGridY; y += this.gridSize) {
-      this.ctx.moveTo(startGridX, y);
-      this.ctx.lineTo(endGridX, y);
+      for (let y = startGridY; y <= endGridY; y += this.gridSize) {
+        this.ctx.rect(x, y, 1, 1);
+      }
     }
     
     this.ctx.stroke();
+  }
+  
+  // Draw the temporary wire being created
+  private drawTemporaryWire(): void {
+    if (!this.wireStartPin || !this.wireEndPosition) return;
+    
+    const startPosCircuit = this.canvasToCircuitCoords(
+      this.wireStartPin.position.x,
+      this.wireStartPin.position.y
+    );
+    
+    const endPosCircuit = this.canvasToCircuitCoords(
+      this.wireEndPosition.x,
+      this.wireEndPosition.y
+    );
+    
+    // Draw dotted line
+    this.ctx.strokeStyle = this.options.theme === 'light' ? '#0066cc' : '#66aaff';
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([5, 3]);
+    
+    this.ctx.beginPath();
+    this.ctx.moveTo(startPosCircuit.x, startPosCircuit.y);
+    this.ctx.lineTo(endPosCircuit.x, endPosCircuit.y);
+    this.ctx.stroke();
+    
+    // Reset line dash
+    this.ctx.setLineDash([]);
   }
   
   private drawWires(wires: Wire[], nodes: Node[]): void {
@@ -219,6 +379,56 @@ export class CircuitRenderer {
       this.ctx.lineTo(0, 0); // Placeholder coordinates
       this.ctx.stroke();
     }
+    
+    // Enhanced with auto-routing:
+    // For each wire, calculate a path with segments to avoid direct crossing
+    for (const wire of wires) {
+      // Find start and end positions based on nodes
+      const node1 = nodes.find(n => n.id === wire.nodes[0]);
+      const node2 = nodes.find(n => n.id === wire.nodes[1]);
+      
+      if (!node1 || !node2) continue;
+      
+      // For now, we're using placeholder values until we implement proper
+      // node position tracking
+      const startPos = {x: 0, y: 0}; // Placeholder
+      const endPos = {x: 100, y: 100}; // Placeholder
+      
+      // Calculate auto-routed path
+      const path = this.calculateWirePath(startPos, endPos);
+      
+      // Set wire style based on current
+      const current = Math.abs(wire.current);
+      const wireColor = current > 0.01 ? 
+        (wire.current > 0 ? '#0066cc' : '#cc0066') : 
+        (this.options.theme === 'light' ? '#666666' : '#999999');
+      
+      this.ctx.strokeStyle = wireColor;
+      this.ctx.lineWidth = 2;
+      
+      // Draw the path
+      this.ctx.beginPath();
+      this.ctx.moveTo(path[0].x, path[0].y);
+      
+      for (let i = 1; i < path.length; i++) {
+        this.ctx.lineTo(path[i].x, path[i].y);
+      }
+      
+      this.ctx.stroke();
+    }
+  }
+  
+  // Calculate a path for wire auto-routing
+  private calculateWirePath(start: {x: number, y: number}, end: {x: number, y: number}): {x: number, y: number}[] {
+    // Simple Manhattan routing
+    const midX = (start.x + end.x) / 2;
+    
+    return [
+      { x: start.x, y: start.y },
+      { x: midX, y: start.y },
+      { x: midX, y: end.y },
+      { x: end.x, y: end.y }
+    ];
   }
   
   private drawNodes(nodes: Node[], components: Component[]): void {
@@ -259,6 +469,30 @@ export class CircuitRenderer {
         this.ctx.beginPath();
         this.ctx.arc(pos.x, pos.y, 3, 0, 2 * Math.PI);
         this.ctx.fill();
+      }
+    }
+    
+    // Enhanced with hover highlighting
+    if (this.hoveredPinId) {
+      // Find component and pin
+      const component = components.find(c => c.id === this.hoveredPinId!.componentId);
+      if (component) {
+        const pinPositions = this.getPinPositions(component);
+        const hoveredPin = pinPositions.find(p => p.id === this.hoveredPinId!.pinId);
+        
+        if (hoveredPin) {
+          // Draw highlight
+          this.ctx.fillStyle = '#00cc66';
+          this.ctx.beginPath();
+          this.ctx.arc(
+            (hoveredPin.x - this.canvas.width / 2 - this.panOffset.x) / this.scaleFactor,
+            (hoveredPin.y - this.canvas.height / 2 - this.panOffset.y) / this.scaleFactor,
+            5,
+            0,
+            2 * Math.PI
+          );
+          this.ctx.fill();
+        }
       }
     }
   }
@@ -385,9 +619,97 @@ export class CircuitRenderer {
         this.ctx.fill();
       }
     }
+    
+    // Enhanced animation that shows flow direction and intensity
+    for (const wire of wires) {
+      // Skip wires with negligible current
+      if (Math.abs(wire.current) < 0.0001) {
+        continue;
+      }
+      
+      // Get wire path (simplified for now)
+      const startPos = {x: 0, y: 0}; // Placeholder
+      const endPos = {x: 100, y: 100}; // Placeholder
+      
+      // Calculate wire length
+      const dx = endPos.x - startPos.x;
+      const dy = endPos.y - startPos.y;
+      const wireLength = Math.sqrt(dx*dx + dy*dy);
+      
+      // Current properties
+      const currentMagnitude = Math.abs(wire.current);
+      const normalizedCurrent = Math.min(currentMagnitude / 0.1, 1); // Normalize to max of 0.1A
+      const particleCount = Math.max(3, Math.floor(wireLength / 20));
+      
+      // Particle color based on current direction
+      const particleColor = wire.current > 0 ? '#3366ff' : '#ff3366';
+      
+      // Create particles if they don't exist
+      if (!this.particles.has(wire.id)) {
+        const newParticles: Particle[] = [];
+        
+        for (let i = 0; i < particleCount; i++) {
+          newParticles.push({
+            position: i / particleCount,
+            speed: 0.5 + Math.random() * 0.5 // Variation in speed
+          });
+        }
+        
+        this.particles.set(wire.id, newParticles);
+      }
+      
+      // Get existing particles
+      const particles = this.particles.get(wire.id)!;
+      
+      // Update particle positions
+      for (let i = 0; i < particles.length; i++) {
+        const particle = particles[i];
+        
+        // Move particle along wire
+        const direction = Math.sign(wire.current);
+        const speed = 0.5 * normalizedCurrent * particle.speed;
+        
+        particle.position += direction * speed * deltaTime;
+        
+        // Wrap around
+        if (particle.position > 1) particle.position -= 1;
+        if (particle.position < 0) particle.position += 1;
+        
+        // Draw particle
+        const t = particle.position;
+        const x = startPos.x + dx * t;
+        const y = startPos.y + dy * t;
+        
+        // Particle size based on current
+        const size = 2 + normalizedCurrent * 3;
+        
+        this.ctx.fillStyle = particleColor;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, size, 0, 2 * Math.PI);
+        this.ctx.fill();
+      }
+    }
   }
   
   private drawComponent(component: Component): void {
+    // Add selection highlight if component is selected
+    const isSelected = component.id === this.selectedComponentId;
+    
+    if (isSelected) {
+      // Draw selection highlight
+      this.ctx.save();
+      this.ctx.translate(component.position.x, component.position.y);
+      this.ctx.rotate(component.rotation * Math.PI / 180);
+      
+      this.ctx.strokeStyle = '#0066cc';
+      this.ctx.lineWidth = 2;
+      this.ctx.setLineDash([5, 3]);
+      this.ctx.strokeRect(-35, -35, 70, 70);
+      this.ctx.setLineDash([]);
+      
+      this.ctx.restore();
+    }
+    
     // Dispatch to specific component drawing method based on type
     switch (component.type) {
       case 'resistor':
@@ -406,6 +728,35 @@ export class CircuitRenderer {
       default:
         this.drawGenericComponent(component);
         break;
+    }
+    
+    // Draw pins with hover effect
+    for (const pin of component.pins) {
+      const isHovered = this.hoveredPinId && 
+                       this.hoveredPinId.componentId === component.id && 
+                       this.hoveredPinId.pinId === pin.id;
+      
+      // Apply rotation to pin position
+      const angle = component.rotation * Math.PI / 180;
+      const dx = pin.position.x - component.position.x;
+      const dy = pin.position.y - component.position.y;
+      
+      const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle) + component.position.x;
+      const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle) + component.position.y;
+      
+      // Draw pin
+      this.ctx.fillStyle = isHovered ? '#0066cc' : '#666666';
+      this.ctx.beginPath();
+      this.ctx.arc(rotatedX, rotatedY, isHovered ? 5 : 3, 0, 2 * Math.PI);
+      this.ctx.fill();
+      
+      // Draw connection dot if pin is connected to a node
+      if (pin.nodeId) {
+        this.ctx.fillStyle = '#00cc66';
+        this.ctx.beginPath();
+        this.ctx.arc(rotatedX, rotatedY, 2, 0, 2 * Math.PI);
+        this.ctx.fill();
+      }
     }
   }
   
