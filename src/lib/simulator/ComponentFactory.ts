@@ -92,5 +92,27 @@ export class ComponentFactory {
         };
     }
   }
-}
 
+  // Add a method to get the canonical type name
+  static getCanonicalTypeName(type: string): string {
+    const normalizedType = type.toLowerCase().trim();
+    
+    switch (normalizedType) {
+      case 'dcvoltagesource':
+      case 'battery':
+        return 'battery';
+      
+      case 'resistor':
+        return 'resistor';
+      
+      case 'led':
+        return 'led';
+      
+      case 'switch':
+        return 'switch';
+      
+      default:
+        return normalizedType;
+    }
+  }
+}

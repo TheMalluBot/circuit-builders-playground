@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { SimulationProvider, useSimulation } from '@/lib/simulator/SimulationContext';
 import { type CircuitComponentProps, type DragInfo } from '@/types/simulator';
+import { ComponentFactory } from '@/lib/simulator/ComponentFactory';
 
 interface CircuitPlaygroundProps {
   className?: string;
@@ -22,16 +24,21 @@ const ComponentPalette: React.FC = () => {
 
   const handleDragStart = (type: string, e: React.DragEvent) => {
     setDraggingComponent(type);
-    e.dataTransfer.setData('component/type', type);
+    // Standardize the component type using the factory
+    const canonicalType = ComponentFactory.getCanonicalTypeName(type);
+    e.dataTransfer.setData('component/type', canonicalType);
     e.dataTransfer.effectAllowed = 'copy';
   };
 
   const handleMouseDown = (type: string, e: React.MouseEvent) => {
     e.preventDefault();
     
+    // Standardize the component type using the factory
+    const canonicalType = ComponentFactory.getCanonicalTypeName(type);
+    
     const dragStartEvent = new CustomEvent('component-drag-start', {
       detail: {
-        type: type,
+        type: canonicalType,
         clientX: e.clientX,
         clientY: e.clientY
       },
@@ -56,7 +63,9 @@ const ComponentPalette: React.FC = () => {
           draggable
           onDragStart={(e) => handleDragStart(comp.name.toLowerCase(), e)}
           onMouseDown={(e) => handleMouseDown(comp.name.toLowerCase(), e)}
-          className="flex flex-col items-center p-2 rounded-md bg-gray-50 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors"
+          className={`flex flex-col items-center p-2 rounded-md bg-gray-50 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors ${
+            draggingComponent === comp.name.toLowerCase() ? 'ring-2 ring-blue-500' : ''
+          }`}
         >
           <img src={comp.icon} alt={comp.name} className="w-8 h-8 mb-1" />
           <span className="text-xs font-medium">{comp.name}</span>
@@ -296,6 +305,18 @@ const CircuitCanvas: React.FC = () => {
   } | null>(null);
   const [tempWireEnd, setTempWireEnd] = useState<{x: number, y: number} | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [placementFeedback, setPlacementFeedback] = useState<{ x: number, y: number, type: string } | null>(null);
+  
+  // Show feedback when a component is placed
+  useEffect(() => {
+    if (placementFeedback) {
+      const timer = setTimeout(() => {
+        setPlacementFeedback(null);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [placementFeedback]);
   
   useEffect(() => {
     const handleComponentDragStart = (e: CustomEvent) => {
@@ -339,9 +360,18 @@ const CircuitCanvas: React.FC = () => {
           const canvasX = e.clientX - rect.left;
           const canvasY = e.clientY - rect.top;
           
+          // Create a unique ID for the component
           const id = `${paletteDragInfo.type}_${Date.now()}`;
           
+          // Add the component to the simulation
           addComponent(paletteDragInfo.type, { x: canvasX, y: canvasY });
+          
+          // Show placement feedback
+          setPlacementFeedback({
+            x: canvasX,
+            y: canvasY,
+            type: paletteDragInfo.type
+          });
         }
       }
       
@@ -481,11 +511,8 @@ const CircuitCanvas: React.FC = () => {
     
     const handleMouseUp = (e: MouseEvent) => {
       if (wireStart && hoveredNodeId && wireStart.nodeId !== hoveredNodeId) {
-        setTimeout(() => {
-          if (wireStart && hoveredNodeId) {
-            createWire(wireStart.nodeId, hoveredNodeId);
-          }
-        }, 0);
+        // Use the createWire from the simulation context
+        createWire(wireStart.nodeId, hoveredNodeId);
       }
       
       setWireStart(null);
@@ -514,7 +541,14 @@ const CircuitCanvas: React.FC = () => {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
-      addComponent(componentType.toLowerCase(), { x, y });
+      addComponent(componentType, { x, y });
+      
+      // Show placement feedback
+      setPlacementFeedback({
+        x,
+        y,
+        type: componentType
+      });
     }
   };
   
@@ -540,7 +574,8 @@ const CircuitCanvas: React.FC = () => {
     };
   };
   
-  const getNodePosition = (nodeId: string, state: any) => {
+  // Utility function to get a node position from its ID
+  const getNodePositionFromId = (nodeId: string, state: any) => {
     for (const comp of state.components) {
       for (const pin of comp.pins) {
         if (pin.nodeId === nodeId || `${comp.id}-${pin.id}` === nodeId) {
@@ -560,6 +595,7 @@ const CircuitCanvas: React.FC = () => {
         onDragOver={handleDragOver}
       />
       
+      {/* Ghost element during drag */}
       {ghostPosition && paletteDragInfo && (
         <div 
           className="absolute pointer-events-none z-50 w-16 h-16 bg-blue-100 border-2 border-dashed border-blue-500 rounded-md flex items-center justify-center"
@@ -574,6 +610,20 @@ const CircuitCanvas: React.FC = () => {
         </div>
       )}
       
+      {/* Placement feedback animation */}
+      {placementFeedback && (
+        <div 
+          className="absolute pointer-events-none z-40 w-20 h-20 rounded-full animate-ping"
+          style={{
+            left: placementFeedback.x - 40,
+            top: placementFeedback.y - 40,
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            border: '2px solid rgba(59, 130, 246, 0.5)'
+          }}
+        />
+      )}
+      
+      {/* Wire drawing visualization */}
       {wireStart && tempWireEnd && (
         <svg
           className="absolute inset-0 pointer-events-none"
@@ -591,12 +641,13 @@ const CircuitCanvas: React.FC = () => {
         </svg>
       )}
       
+      {/* Node hover indicator */}
       {hoveredNodeId && !wireStart && simulationState && (
         <div 
           className="absolute w-3 h-3 bg-blue-500 rounded-full pointer-events-none"
           style={{ 
-            left: getNodePosition(hoveredNodeId, simulationState).x - 6, 
-            top: getNodePosition(hoveredNodeId, simulationState).y - 6,
+            left: getNodePositionFromId(hoveredNodeId, simulationState).x - 6, 
+            top: getNodePositionFromId(hoveredNodeId, simulationState).y - 6,
             zIndex: 5
           }}
         />

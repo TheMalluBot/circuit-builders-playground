@@ -62,3 +62,10 @@ export interface WireConnectionState {
   hoveredNodeId: string | null;
 }
 
+// Added for consistency with the component factory
+export interface ComponentInfo {
+  displayName: string;
+  description: string;
+  category: string;
+  defaultProperties: Record<string, any>;
+}

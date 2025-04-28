@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { CircuitEngine } from './CircuitEngine';
 import { ComponentFactory } from './ComponentFactory';
@@ -142,25 +141,25 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
   };
   
   const createWire = (startNodeId: string, endNodeId: string) => {
-    if (!engine) return;
+    if (!engine || !simulationState) return;
+    
+    console.log(`Creating wire between ${startNodeId} and ${endNodeId}`);
     
     const wireId = `wire_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
-    if (simulationState) {
-      const newWires = [
-        ...simulationState.wires,
-        {
-          id: wireId,
-          nodes: [startNodeId, endNodeId] as [string, string],
-          current: 0
-        }
-      ];
-      
-      setSimulationState({
-        ...simulationState,
-        wires: newWires
-      });
-    }
+    const newWires = [
+      ...simulationState.wires,
+      {
+        id: wireId,
+        nodes: [startNodeId, endNodeId] as [string, string],
+        current: 0
+      }
+    ];
+    
+    setSimulationState({
+      ...simulationState,
+      wires: newWires
+    });
   };
   
   const deleteWire = (wireId: string) => {
@@ -224,14 +223,21 @@ export const SimulationProvider: React.FC<SimulationProviderProps> = ({ children
   const addComponent = (type: string, position: { x: number; y: number }, properties: Record<string, any> = {}) => {
     if (!engine) return;
     
-    const id = `comp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const component = ComponentFactory.createComponent(type, id, position, properties);
+    const canonicalType = ComponentFactory.getCanonicalTypeName(type);
+    
+    const id = `comp_${canonicalType}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    console.log(`Adding component: ${canonicalType} at position (${position.x}, ${position.y})`);
+    
+    const component = ComponentFactory.createComponent(canonicalType, id, position, properties);
     
     if (component) {
       engine.addComponent(component);
       updateSimulationState();
       
       setSelectedComponent(component);
+    } else {
+      console.error(`Failed to create component of type ${canonicalType}`);
     }
   };
   
