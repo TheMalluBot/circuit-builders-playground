@@ -1,5 +1,5 @@
 
-import { Component, Wire } from '../types';
+import { Component, Wire, Node as CircuitNode } from '../types';
 
 /**
  * WireManager handles the management and updating of wires in the circuit
@@ -41,7 +41,7 @@ export class WireManager {
   /**
    * Rebuilds all wires based on node connections
    */
-  rebuildWires(nodes: Map<string, Node>): Wire[] {
+  rebuildWires(nodes: Map<string, CircuitNode>): Wire[] {
     const wires: Wire[] = [];
     const processedConnections = new Set<string>();
     

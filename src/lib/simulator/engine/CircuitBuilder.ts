@@ -1,5 +1,5 @@
 
-import { Component, Node, MatrixContribution } from '../types';
+import { Component, Node as CircuitNode, MatrixContribution } from '../types';
 
 /**
  * CircuitBuilder handles the construction of circuit matrices for simulation
@@ -10,7 +10,7 @@ export class CircuitBuilder {
    */
   buildMatrix(
     components: Component[], 
-    nodes: Map<string, Node>, 
+    nodes: Map<string, CircuitNode>, 
     timeStep: number
   ): MatrixContribution {
     // Create node mapping (excluding ground node)

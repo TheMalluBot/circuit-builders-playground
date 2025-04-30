@@ -1,5 +1,5 @@
 
-import { Component, Node, Wire, Connection, Pin, MatrixContribution, SimulationState } from '../types';
+import { Component, Node as CircuitNode, Wire, Connection, Pin, MatrixContribution, SimulationState } from '../types';
 import { CircuitSolver } from './CircuitSolver';
 import { CircuitBuilder } from './CircuitBuilder';
 import { WireManager } from './WireManager';
@@ -7,7 +7,7 @@ import { NodeManager } from './NodeManager';
 
 export class CircuitEngine {
   private components: Component[] = [];
-  private nodes: Map<string, Node> = new Map();
+  private nodes: Map<string, CircuitNode> = new Map();
   private wires: Wire[] = [];
   private time: number = 0;
   private running: boolean = false;
@@ -176,7 +176,7 @@ export class CircuitEngine {
     }
   }
   
-  getNode(nodeId: string): Node | undefined {
+  getNode(nodeId: string): CircuitNode | undefined {
     return this.nodes.get(nodeId);
   }
 
@@ -305,7 +305,7 @@ export class CircuitEngine {
     return [...this.components];
   }
   
-  getNodes(): Node[] {
+  getNodes(): CircuitNode[] {
     return Array.from(this.nodes.values());
   }
   

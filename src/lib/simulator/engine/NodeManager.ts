@@ -1,5 +1,5 @@
 
-import { Node, Connection, Pin, Component, Wire } from '../types';
+import { Node as CircuitNode, Connection, Pin, Component, Wire } from '../types';
 
 /**
  * NodeManager handles the management of circuit nodes and their connections
@@ -11,7 +11,7 @@ export class NodeManager {
   connectPinToNode(
     pin: Pin, 
     nodeId: string, 
-    nodes: Map<string, Node>, 
+    nodes: Map<string, CircuitNode>, 
     disconnectFn: () => void
   ): void {
     // Disconnect pin from any existing node
@@ -38,7 +38,7 @@ export class NodeManager {
   mergeNodes(
     nodeId1: string, 
     nodeId2: string, 
-    nodes: Map<string, Node>, 
+    nodes: Map<string, CircuitNode>, 
     components: Component[], 
     wires: Wire[]
   ): void {
