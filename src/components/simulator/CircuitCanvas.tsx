@@ -1,6 +1,6 @@
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useSimulation } from '@/lib/simulator/context/useSimulation';
+import { CircuitEngine } from '@/lib/simulator/engine';
 import { useCircuitInteractions } from '@/lib/simulator/hooks/useCircuitInteractions';
 import { getNodePositionFromId } from '@/lib/simulator/utils/geometryUtils';
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Play, 
@@ -13,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { SimulationProvider } from '@/lib/simulator/context/SimulationProvider';
 import { useSimulation } from '@/lib/simulator/context/useSimulation';
 import { type SimulationActivity, type RenderOptions, type CircuitComponentProps } from '@/types/simulator';
+import { CircuitEngine } from '@/lib/simulator/engine';
 
 interface CircuitSimulatorProps {
   simulatorState: string;

@@ -1,87 +1,85 @@
-
 import React from 'react';
-import { 
-  Play, 
-  Pause, 
-  RotateCcw,
-  Trash2,
-  Zap,
-  RotateCw
-} from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useSimulation } from '@/lib/simulator/context/useSimulation';
+import { CircuitEngine } from '@/lib/simulator/engine';
 
-const CircuitControls: React.FC = () => {
+interface CircuitControlsProps {
+  className?: string;
+}
+
+const CircuitControls: React.FC<CircuitControlsProps> = ({ className }) => {
   const { 
     isRunning, 
     toggleSimulation, 
-    resetSimulation,
+    resetSimulation, 
+    simulationSpeed, 
+    setSimulationSpeed,
+    selectedComponent,
     deleteSelectedComponent,
-    rotateSelectedComponent,
-    simulationSpeed,
-    setSimulationSpeed
+    rotateSelectedComponent
   } = useSimulation();
 
+  const handleSpeedChange = (value: number[]) => {
+    setSimulationSpeed(value[0]);
+  };
+
   return (
-    <div className="flex flex-col gap-3 p-3 bg-white shadow-inner rounded-md">
-      <div className="flex gap-2">
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <div className="flex items-center space-x-2">
         <Button 
           variant="outline" 
-          size="sm"
+          size="sm" 
+          className="bg-white shadow"
           onClick={toggleSimulation}
-          className="flex-1"
         >
-          {isRunning ? 
-            <><Pause className="w-4 h-4 mr-1" /> Pause</> : 
-            <><Play className="w-4 h-4 mr-1" /> Run</>
-          }
+          {isRunning ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+          {isRunning ? 'Pause' : 'Run'}
         </Button>
         
         <Button 
           variant="outline" 
-          size="sm"
+          size="sm" 
+          className="bg-white shadow"
           onClick={resetSimulation}
         >
           <RotateCcw className="w-4 h-4" />
         </Button>
       </div>
+
+      <div>
+        <p className="text-xs text-muted-foreground">Simulation Speed</p>
+        <Slider
+          defaultValue={[simulationSpeed]}
+          max={10}
+          min={0.1}
+          step={0.1}
+          onValueChange={handleSpeedChange}
+          aria-label="Simulation speed"
+        />
+      </div>
       
-      <div className="flex gap-2">
+      <div className="flex items-center space-x-2">
         <Button 
           variant="outline" 
-          size="sm"
-          onClick={rotateSelectedComponent}
+          size="sm" 
+          className="bg-white shadow"
+          onClick={deleteSelectedComponent}
+          disabled={!selectedComponent}
         >
-          <RotateCw className="w-4 h-4 mr-1" />
-          Rotate
+          Delete
         </Button>
         
         <Button 
           variant="outline" 
-          size="sm"
-          onClick={deleteSelectedComponent}
-          className="text-red-500"
+          size="sm" 
+          className="bg-white shadow"
+          onClick={rotateSelectedComponent}
+          disabled={!selectedComponent}
         >
-          <Trash2 className="w-4 h-4 mr-1" />
-          Delete
+          Rotate
         </Button>
-      </div>
-      
-      <div className="mt-2">
-        <label className="block text-xs text-gray-500 mb-1">Simulation Speed</label>
-        <div className="flex items-center gap-2">
-          <Zap className="w-3 h-3 text-gray-400" />
-          <Slider 
-            value={[simulationSpeed]} 
-            onValueChange={(value) => setSimulationSpeed(value[0])}
-            min={0.25}
-            max={2}
-            step={0.25}
-            className="flex-1"
-          />
-          <Zap className="w-5 h-5 text-blue-500" />
-        </div>
       </div>
     </div>
   );

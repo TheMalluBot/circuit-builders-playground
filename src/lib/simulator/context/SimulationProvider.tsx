@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { SimulationContext } from './SimulationContext';
-import { CircuitEngine } from '../CircuitEngine';
+import { CircuitEngine } from '../engine';
 import { CircuitRenderer, RenderOptions } from '../CircuitRenderer';
 import { Component, SimulationState, Node, Wire } from '../types';
 import { ComponentFactory } from '../ComponentFactory';
