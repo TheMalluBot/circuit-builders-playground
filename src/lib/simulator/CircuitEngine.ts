@@ -10,6 +10,7 @@ export class CircuitEngine {
   private lastUpdateTime: number = 0;
   private simulationSpeed: number = 1.0;
   private changeListeners: Function[] = [];
+  private listeners: Function[] = []; // Added for notifyListeners
   
   constructor() {
     this.lastUpdateTime = performance.now();
@@ -37,27 +38,29 @@ export class CircuitEngine {
     this.notifyChangeListeners();
   }
   
+  // Updated connectPins method to fix connection issues
   connectPins(pin1: Pin, pin2: Pin): void {
-    // If either pin is already connected to a node
-    const node1 = pin1.nodeId ? this.nodes.get(pin1.nodeId) : null;
-    const node2 = pin2.nodeId ? this.nodes.get(pin2.nodeId) : null;
+    // Don't connect if already connected to same node
+    if (pin1.nodeId && pin2.nodeId && pin1.nodeId === pin2.nodeId) return;
     
-    if (node1 && node2) {
-      // Merge nodes
-      this.mergeNodes(node1.id, node2.id);
-    } else if (node1) {
-      // Connect pin2 to node1
-      this.connectPinToNode(pin2, node1.id);
-    } else if (node2) {
-      // Connect pin1 to node2
-      this.connectPinToNode(pin1, node2.id);
-    } else {
-      // Create new node and connect both pins
+    // If both pins are connected to nodes, merge the nodes
+    if (pin1.nodeId && pin2.nodeId) {
+      this.mergeNodes(pin1.nodeId, pin2.nodeId);
+    } 
+    // If one pin is connected, connect the other to same node
+    else if (pin1.nodeId) {
+      this.connectPinToNode(pin2, pin1.nodeId);
+    }
+    else if (pin2.nodeId) {
+      this.connectPinToNode(pin1, pin2.nodeId);
+    }
+    // If neither is connected, create a new node
+    else {
       const nodeId = `node_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      this.nodes.set(nodeId, {
-        id: nodeId,
-        voltage: 0,
-        connections: []
+      this.nodes.set(nodeId, { 
+        id: nodeId, 
+        voltage: 0, 
+        connections: [] 
       });
       
       this.connectPinToNode(pin1, nodeId);
@@ -65,7 +68,7 @@ export class CircuitEngine {
     }
     
     this.rebuildCircuit();
-    this.notifyChangeListeners();
+    this.notifyListeners();
   }
   
   disconnectPin(pin: Pin): void {
@@ -142,6 +145,23 @@ export class CircuitEngine {
     this.changeListeners = this.changeListeners.filter(l => l !== listener);
   }
   
+  // Add a general listener for notifyListeners method
+  addListener(listener: Function): void {
+    if (!this.listeners.includes(listener)) {
+      this.listeners.push(listener);
+    }
+  }
+  
+  // Remove a general listener
+  removeListener(listener: Function): void {
+    this.listeners = this.listeners.filter(l => l !== listener);
+  }
+  
+  // Added notifyListeners method for internal updates
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => listener());
+  }
+  
   // Notify all listeners of state changes
   private notifyChangeListeners(): void {
     for (const listener of this.changeListeners) {
@@ -154,22 +174,24 @@ export class CircuitEngine {
     return this.nodes.get(nodeId);
   }
 
+  // Updated simulationLoop method
   private simulationLoop(timestamp: number): void {
     if (!this.running) return;
     
-    const deltaTime = (timestamp - this.lastUpdateTime) / 1000; // Convert to seconds
+    // Calculate time step
+    const deltaTime = Math.min((timestamp - this.lastUpdateTime) / 1000, 0.1);
     this.lastUpdateTime = timestamp;
     
     // Apply simulation speed factor
     const adjustedTimeStep = deltaTime * this.simulationSpeed;
     
     // Limit time step to avoid instability with large steps
-    const timeStep = Math.min(adjustedTimeStep, 0.02 * this.simulationSpeed); // Maximum 20ms step
+    const timeStep = Math.min(adjustedTimeStep, 0.02 * this.simulationSpeed);
     
-    // Perform simulation step
+    // Solve circuit
     this.step(timeStep);
     
-    // Update wires with current values
+    // Update wire currents
     this.updateWireCurrents();
     
     // Notify listeners
@@ -177,6 +199,44 @@ export class CircuitEngine {
     
     // Schedule next frame
     requestAnimationFrame(this.simulationLoop.bind(this));
+  }
+  
+  // Added solveCircuit method
+  solveCircuit(): void {
+    // Build circuit equations
+    const { conductanceMatrix, currentVector, nodeMap } = this.buildCircuitMatrix(0.01); // Use small default timestep
+    
+    if (conductanceMatrix.length === 0) return;
+    
+    // Solve for node voltages
+    const voltages = this.solveCircuit(conductanceMatrix, currentVector);
+    
+    // Update node voltages
+    Object.entries(nodeMap).forEach(([nodeId, index]) => {
+      const node = this.nodes.get(nodeId);
+      if (node) {
+        node.voltage = voltages[index as number];
+      }
+    });
+    
+    // Update component states
+    this.updateComponentStates(0.01); // Use small default timestep
+  }
+  
+  // Helper method for the solveCircuit method
+  private updateComponentStates(timeStep: number): void {
+    for (const component of this.components) {
+      // Map node voltages to array for component
+      const componentVoltages: number[] = component.pins.map(pin => {
+        if (pin.nodeId) {
+          const node = this.nodes.get(pin.nodeId);
+          return node ? node.voltage : 0;
+        }
+        return 0;
+      });
+      
+      component.updateState(componentVoltages, timeStep);
+    }
   }
   
   private step(timeStep: number): void {
@@ -266,6 +326,11 @@ export class CircuitEngine {
   
   private solveCircuit(conductanceMatrix: number[][], currentVector: number[]): number[] {
     // For small matrices, use direct Gaussian elimination
+    return this.gaussianElimination(conductanceMatrix, currentVector);
+  }
+  
+  // Alias for solveCircuit to match the added method signature
+  private solveMatrix(conductanceMatrix: number[][], currentVector: number[]): number[] {
     return this.gaussianElimination(conductanceMatrix, currentVector);
   }
   
