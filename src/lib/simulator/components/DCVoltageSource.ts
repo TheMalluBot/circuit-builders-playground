@@ -60,10 +60,10 @@ export class DCVoltageSource extends BaseComponent {
   
   updateState(voltages: number[], timeStep: number): void {
     if (voltages.length >= 2) {
-      // Calculate current based on total circuit current
-      // In a real simulation, we would add a row/column for the current
-      // through the voltage source, but we're using a simplification
-      this.properties.current = 0; // Will be calculated from circuit
+      // Calculate current based on voltage difference and internal resistance
+      const internalResistance = 0.1; // Small internal resistance
+      const voltageDiff = voltages[0] - voltages[1];
+      this.properties.current = (this.properties.voltage - voltageDiff) / internalResistance;
     }
   }
   

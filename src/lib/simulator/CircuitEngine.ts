@@ -1,4 +1,3 @@
-
 import { Component, Node, Wire, Connection, Pin, MatrixContribution, SimulationState } from './types';
 
 export class CircuitEngine {
@@ -215,7 +214,7 @@ export class CircuitEngine {
     Object.entries(nodeMap).forEach(([nodeId, index]) => {
       const node = this.nodes.get(nodeId);
       if (node) {
-        node.voltage = voltages[index as number];
+        node.voltage = voltages[index];
       }
     });
     
