@@ -38,7 +38,7 @@ export class CircuitEngine {
     this.notifyChangeListeners();
   }
   
-  // Updated connectPins method to fix connection issues
+  // Fixed connectPins method to resolve connection issues
   connectPins(pin1: Pin, pin2: Pin): void {
     // Don't connect if already connected to same node
     if (pin1.nodeId && pin2.nodeId && pin1.nodeId === pin2.nodeId) return;
@@ -174,7 +174,7 @@ export class CircuitEngine {
     return this.nodes.get(nodeId);
   }
 
-  // Updated simulationLoop method
+  // Fixed simulationLoop method to update properly
   private simulationLoop(timestamp: number): void {
     if (!this.running) return;
     
@@ -201,7 +201,7 @@ export class CircuitEngine {
     requestAnimationFrame(this.simulationLoop.bind(this));
   }
   
-  // Added solveCircuit method
+  // Added solveCircuit method for external use
   solveCircuit(): void {
     // Build circuit equations
     const { conductanceMatrix, currentVector, nodeMap } = this.buildCircuitMatrix(0.01); // Use small default timestep
@@ -209,7 +209,7 @@ export class CircuitEngine {
     if (conductanceMatrix.length === 0) return;
     
     // Solve for node voltages
-    const voltages = this.solveCircuit(conductanceMatrix, currentVector);
+    const voltages = this.solveMatrix(conductanceMatrix, currentVector);
     
     // Update node voltages
     Object.entries(nodeMap).forEach(([nodeId, index]) => {
@@ -223,7 +223,7 @@ export class CircuitEngine {
     this.updateComponentStates(0.01); // Use small default timestep
   }
   
-  // Helper method for the solveCircuit method
+  // Helper method for updating component states
   private updateComponentStates(timeStep: number): void {
     for (const component of this.components) {
       // Map node voltages to array for component
@@ -246,7 +246,7 @@ export class CircuitEngine {
     if (conductanceMatrix.length === 0) return; // No circuit to solve
     
     // Solve system of equations
-    const voltages = this.solveCircuit(conductanceMatrix, currentVector);
+    const voltages = this.solveMatrix(conductanceMatrix, currentVector);
     
     // Update node voltages
     for (const [nodeId, index] of Object.entries(nodeMap)) {
@@ -324,13 +324,9 @@ export class CircuitEngine {
     return { conductanceMatrix, currentVector, nodeMap };
   }
   
-  private solveCircuit(conductanceMatrix: number[][], currentVector: number[]): number[] {
-    // For small matrices, use direct Gaussian elimination
-    return this.gaussianElimination(conductanceMatrix, currentVector);
-  }
-  
-  // Alias for solveCircuit to match the added method signature
+  // Use solveMatrix as the single implementation
   private solveMatrix(conductanceMatrix: number[][], currentVector: number[]): number[] {
+    // For small matrices, use direct Gaussian elimination
     return this.gaussianElimination(conductanceMatrix, currentVector);
   }
   

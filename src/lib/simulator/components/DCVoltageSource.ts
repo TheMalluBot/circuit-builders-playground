@@ -14,14 +14,14 @@ export class DCVoltageSource extends BaseComponent {
     this.pins = [
       {
         id: 'positive',
-        position: { x: position.x, y: position.y - 40 }, // Top pin (positive)
+        position: { x: 0, y: -40 }, // Top pin (positive)
         nodeId: null,
         componentId: id,
         type: 'output'
       },
       {
         id: 'negative',
-        position: { x: position.x, y: position.y + 40 }, // Bottom pin (negative)
+        position: { x: 0, y: 40 }, // Bottom pin (negative)
         nodeId: null,
         componentId: id,
         type: 'input'

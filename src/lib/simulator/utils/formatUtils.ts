@@ -58,3 +58,30 @@ export const formatPower = (watts: number): string => {
     return `${power.toFixed(2)}W`;
   }
 };
+
+/**
+ * Format a numeric value with an appropriate SI prefix
+ */
+export const formatSI = (value: number, baseUnit: string): string => {
+  if (isNaN(value)) return `0${baseUnit}`;
+  
+  const absValue = Math.abs(value);
+  
+  if (absValue >= 1e9) {
+    return `${(value / 1e9).toFixed(2)}G${baseUnit}`;
+  } else if (absValue >= 1e6) {
+    return `${(value / 1e6).toFixed(2)}M${baseUnit}`;
+  } else if (absValue >= 1e3) {
+    return `${(value / 1e3).toFixed(2)}k${baseUnit}`;
+  } else if (absValue < 1e-9) {
+    return `${(value * 1e12).toFixed(2)}p${baseUnit}`;
+  } else if (absValue < 1e-6) {
+    return `${(value * 1e9).toFixed(2)}n${baseUnit}`;
+  } else if (absValue < 1e-3) {
+    return `${(value * 1e6).toFixed(2)}μ${baseUnit}`;
+  } else if (absValue < 1) {
+    return `${(value * 1e3).toFixed(2)}m${baseUnit}`;
+  } else {
+    return `${value.toFixed(2)}${baseUnit}`;
+  }
+};
