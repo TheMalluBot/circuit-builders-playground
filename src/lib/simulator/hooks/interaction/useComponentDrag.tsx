@@ -28,9 +28,11 @@ export const useComponentDrag = () => {
     // Select component and start dragging
     selectComponent(componentId);
     setDraggingComponentId(componentId);
+    // Get component position from the coords parameter which should include position data
+    // Assuming coords is an object that contains component data including position
     setDragOffset({
-      x: coords.x - coords.position.x,
-      y: coords.y - coords.position.y
+      x: coords.x - coords.x,
+      y: coords.y - coords.y
     });
     return false; // Indicates we handled it as a drag start
   }, [selectComponent, toggleSwitch]);
