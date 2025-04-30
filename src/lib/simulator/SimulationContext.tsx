@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { CircuitEngine } from './CircuitEngine';
+import { CircuitEngine } from './engine';
 import { ComponentFactory } from './ComponentFactory';
 import { CircuitRenderer, RenderOptions } from './CircuitRenderer';
 import { Component, SimulationState, Node, Wire } from './types';
