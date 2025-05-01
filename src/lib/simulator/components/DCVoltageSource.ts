@@ -15,14 +15,14 @@ export class DCVoltageSource extends BaseComponent {
       {
         id: 'positive',
         position: { x: 0, y: -40 }, // Top pin (positive)
-        nodeId: null,
+        nodeId: undefined,
         componentId: id,
         type: 'output'
       },
       {
         id: 'negative',
         position: { x: 0, y: 40 }, // Bottom pin (negative)
-        nodeId: null,
+        nodeId: undefined,
         componentId: id,
         type: 'input'
       }

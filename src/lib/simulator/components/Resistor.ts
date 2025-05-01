@@ -15,14 +15,14 @@ export class Resistor extends BaseComponent {
       {
         id: 'p1',
         position: { x: position.x - 40, y: position.y }, // Left pin
-        nodeId: null,
+        nodeId: undefined,
         componentId: id,
         type: 'bidirectional'
       },
       {
         id: 'p2',
         position: { x: position.x + 40, y: position.y }, // Right pin
-        nodeId: null,
+        nodeId: undefined,
         componentId: id,
         type: 'bidirectional'
       }

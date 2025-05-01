@@ -1,4 +1,3 @@
-
 import { Component, Node as CircuitNode, Wire, Connection, Pin, MatrixContribution, SimulationState } from '../types';
 import { CircuitSolver } from './CircuitSolver';
 import { CircuitBuilder } from './CircuitBuilder';
@@ -96,7 +95,7 @@ export class CircuitEngine {
     );
     
     // Update pin
-    pin.nodeId = null;
+    pin.nodeId = undefined; // Changed from null to undefined to match type
     
     // Clean up empty nodes
     if (node.connections.length === 0) {
@@ -255,7 +254,7 @@ export class CircuitEngine {
     for (const [nodeId, index] of Object.entries(nodeMap)) {
       const node = this.nodes.get(nodeId);
       if (node) {
-        node.voltage = voltages[index];
+        node.voltage = voltages[Number(index)]; // Convert index to number
       }
     }
     

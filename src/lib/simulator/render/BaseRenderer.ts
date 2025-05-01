@@ -65,8 +65,8 @@ export class BaseRenderer {
     };
   }
   
-  // Draw grid on the canvas
-  protected drawGrid(): void {
+  // Draw grid on the canvas - Changed from protected to public
+  drawGrid(): void {
     const gridColor = this.options.theme === 'light' ? '#e0e0e0' : '#333333';
     const { x: startX, y: startY } = this.canvasToCircuitCoords(0, 0);
     const { x: endX, y: endY } = this.canvasToCircuitCoords(this.canvas.width, this.canvas.height);

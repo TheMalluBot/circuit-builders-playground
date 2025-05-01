@@ -1,8 +1,8 @@
 
 import React, { createContext } from 'react';
 import { CircuitEngine } from '../engine';
-import { CircuitRenderer, RenderOptions } from '../CircuitRenderer';
-import { Component, SimulationState, Wire } from '../types';
+import { CircuitRenderer } from '../render/CircuitRenderer';
+import { Component, SimulationState, Wire, RenderOptions } from '../types';
 import { Node as CircuitNode } from '../types';
 
 interface SimulationContextType {

@@ -28,9 +28,9 @@ export class WireManager {
           if (wire.nodes.includes(pin.nodeId)) {
             // Determine current direction relative to wire direction
             if (wire.nodes[0] === pin.nodeId) {
-              wire.current += current; // Flowing away from first node
+              wire.current += Number(current); // Ensure current is a number
             } else {
-              wire.current -= current; // Flowing into second node
+              wire.current -= Number(current); // Ensure current is a number
             }
           }
         }

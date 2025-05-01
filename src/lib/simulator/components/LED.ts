@@ -23,14 +23,14 @@ export class LED extends BaseComponent {
       {
         id: 'anode',
         position: { x: position.x - 30, y: position.y }, // Left pin (anode)
-        nodeId: null,
+        nodeId: undefined,
         componentId: id,
         type: 'input'
       },
       {
         id: 'cathode',
         position: { x: position.x + 30, y: position.y }, // Right pin (cathode)
-        nodeId: null,
+        nodeId: undefined,
         componentId: id,
         type: 'output'
       }

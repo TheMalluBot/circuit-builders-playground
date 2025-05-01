@@ -48,14 +48,14 @@ export class CircuitBuilder {
         const i = nodeMap[sourceNodeId];
         
         // Add current contributions
-        currentVector[i] += contribution.currentVector[sourceIdx];
+        currentVector[i] += contribution.currentVector[Number(sourceIdx)];
         
         for (const [targetNodeId, targetIdx] of Object.entries(contribution.nodeMap)) {
           // Skip ground node
           if (targetNodeId === groundNodeId) continue;
           
           const j = nodeMap[targetNodeId];
-          conductanceMatrix[i][j] += contribution.conductanceMatrix[sourceIdx][targetIdx];
+          conductanceMatrix[i][j] += contribution.conductanceMatrix[Number(sourceIdx)][Number(targetIdx)];
         }
       }
     }
