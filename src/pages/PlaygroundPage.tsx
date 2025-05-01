@@ -1,165 +1,49 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Save,
-  Download,
-  Upload,
-  Info
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
+import React from 'react';
+import { CircuitSimulator } from '@/components/circuit/CircuitSimulator';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { CircuitPlayground } from '@/components/interactive';
-import { SimulationActivity } from '@/types/simulator';
 
 const PlaygroundPage = () => {
-  const [simulatorState, setSimulatorState] = useState('empty');
-  const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
-  const { toast } = useToast();
-  
-  const simulationActivity: SimulationActivity = {
-    title: "Circuit Playground",
-    description: "Design and test circuits",
-    components: [
-      "battery", "resistor", "led", "switch"
-    ],
-    states: {
-      empty: { 
-        components: [] 
-      },
-      "basic-led-circuit": {
-        components: ["battery", "resistor", "led"],
-        connections: [["battery-positive", "resistor-p1"], ["resistor-p2", "led-anode"], ["led-cathode", "battery-negative"]]
-      },
-      "switch-led-circuit": {
-        components: ["battery", "switch", "led"],
-        connections: [["battery-positive", "switch-p1"], ["switch-p2", "led-anode"], ["led-cathode", "battery-negative"]]
-      }
-    },
-    instructions: ["Drag components from the panel to build your circuit", "Connect components by clicking on pins", "Use the play button to simulate your circuit"],
-    objectives: ["Learn basic components", "Build working circuits", "Understand electrical principles"]
-  };
-  
-  const handleComponentHighlight = (id: string) => {
-    setHighlightedComponent(id);
-    setTimeout(() => setHighlightedComponent(null), 1500);
-  };
-  
-  const handleStateChange = (state: string) => {
-    setSimulatorState(state);
-    toast({
-      title: "Circuit Template Loaded",
-      description: `Loaded the ${state} circuit template.`,
-      duration: 3000
-    });
-  };
-  
   return (
     <div className="flex flex-col min-h-screen">
       <Navigation />
       
-      <main className="flex-1">
-        <div className="container py-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Home
-            </Link>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-sm">Circuit Playground</span>
+      <main className="flex-1 py-6">
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl font-bold mb-2">Circuit Playground</h1>
+          <p className="text-gray-600 mb-6">
+            Build and simulate electronic circuits. Select components from the palette,
+            place them on the canvas, and connect them to create working circuits.
+          </p>
+          
+          <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px] mb-6">
+            <CircuitSimulator />
           </div>
           
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Circuit Playground</h1>
-              <p className="text-muted-foreground">Design, build, and test your own circuits</p>
-            </div>
-            
-            <div className="flex gap-2 flex-wrap">
-              <Button size="sm" variant="outline" className="gap-1">
-                <Save className="w-4 h-4" />
-                <span>Save</span>
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1">
-                <Download className="w-4 h-4" />
-                <span>Download</span>
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1">
-                <Upload className="w-4 h-4" />
-                <span>Import</span>
-              </Button>
-            </div>
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <h2 className="text-lg font-semibold mb-2">How to use:</h2>
+            <ol className="list-decimal ml-5 space-y-1">
+              <li>Select a component from the palette above</li>
+              <li>Click on the canvas to place the component</li>
+              <li>Click on component pins to create connections between components</li>
+              <li>Use the Start button to see your circuit in action</li>
+              <li>Click on switches to toggle them on/off during simulation</li>
+            </ol>
           </div>
           
-          <CircuitPlayground className="mb-6" />
-          
-          <div className="mt-4 flex gap-2">
-            <Button 
-              size="sm" 
-              variant={simulatorState === 'empty' ? 'default' : 'outline'}
-              onClick={() => handleStateChange('empty')}
-            >
-              Empty Circuit
-            </Button>
-            <Button 
-              size="sm" 
-              variant={simulatorState === 'basic-led-circuit' ? 'default' : 'outline'}
-              onClick={() => handleStateChange('basic-led-circuit')}
-            >
-              Basic LED Circuit
-            </Button>
-            <Button 
-              size="sm" 
-              variant={simulatorState === 'switch-led-circuit' ? 'default' : 'outline'}
-              onClick={() => handleStateChange('switch-led-circuit')}
-            >
-              LED Switch Circuit
-            </Button>
-          </div>
-          
-          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mt-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Getting Started with the Circuit Playground</h2>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Info className="w-5 h-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Drag components from the palette and drop them onto the canvas to build your circuit</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-4 rounded shadow">
+              <h3 className="font-medium mb-2">Battery</h3>
+              <p className="text-sm text-gray-600">Provides voltage to your circuit. The default is 5V.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <h3 className="font-medium mb-2">1. Choose Components</h3>
-                <p className="text-sm text-muted-foreground">
-                  Drag components from the panel onto the workspace. Each component has specific electrical properties.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">2. Make Connections</h3>
-                <p className="text-sm text-muted-foreground">
-                  Click on a pin (connection point) and drag to another pin to create a wire connection between components.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">3. Run Simulation</h3>
-                <p className="text-sm text-muted-foreground">
-                  Click the Run button to see how your circuit behaves in real-time. Toggle switches and adjust component values.
-                </p>
-              </div>
+            <div className="bg-white p-4 rounded shadow">
+              <h3 className="font-medium mb-2">Resistor</h3>
+              <p className="text-sm text-gray-600">Limits current flow. The default resistance is 1kΩ.</p>
+            </div>
+            <div className="bg-white p-4 rounded shadow">
+              <h3 className="font-medium mb-2">LED</h3>
+              <p className="text-sm text-gray-600">Light-emitting diode. It will light up when current flows through it.</p>
             </div>
           </div>
         </div>
@@ -168,6 +52,6 @@ const PlaygroundPage = () => {
       <Footer />
     </div>
   );
-};
+}
 
 export default PlaygroundPage;
