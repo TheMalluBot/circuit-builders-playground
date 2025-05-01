@@ -1,7 +1,9 @@
 
 import { useState, useCallback, useRef } from 'react';
+import { CircuitEngine } from '../../engine';
+import { CircuitRenderer } from '../../render/CircuitRenderer';
 
-export const useSimulationControl = (engine: any, renderer: any, updateSimulationState: () => void) => {
+export const useSimulationControl = (engine: CircuitEngine | null, renderer: CircuitRenderer | null, updateSimulationState: () => void) => {
   const [isRunning, setIsRunning] = useState(false);
   const [simulationSpeed, setSimulationSpeed] = useState(1);
   const animationFrameRef = useRef<number | null>(null);

@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SimulationContext } from './SimulationContext';
 import { CircuitEngine } from '../engine';
-import { CircuitRenderer, RenderOptions } from '../CircuitRenderer';
+import { CircuitRenderer } from '../render/CircuitRenderer';
+import { RenderOptions } from '../types';
 import { Component, SimulationState } from '../types';
 import { useComponentManagement } from './hooks/useComponentManagement';
 import { useWireManagement } from './hooks/useWireManagement';
