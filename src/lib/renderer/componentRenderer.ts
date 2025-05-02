@@ -1,140 +1,23 @@
-import { Circuit, Component, Node, Wire, RenderOptions, Pin } from '@/types/circuit';
-import { calculatePinPosition, calculateWirePath } from './interaction';
 
-export function renderCircuit(
+import { Component, Pin, RenderOptions } from '@/types/circuit';
+import { calculatePinPosition } from '../interaction';
+
+/**
+ * Renders all components in the circuit
+ */
+export function renderComponents(
   ctx: CanvasRenderingContext2D, 
-  circuit: Circuit, 
+  components: Component[],
   options: RenderOptions
 ): void {
-  // Clear canvas
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  
-  // Draw grid
-  drawGrid(ctx, options.theme);
-  
-  // Draw wires first (so they appear behind components)
-  circuit.wires.forEach(wire => {
-    drawWire(ctx, wire, circuit.nodes, circuit, options);
-  });
-  
-  // Draw components
-  circuit.components.forEach(component => {
+  components.forEach(component => {
     drawComponent(ctx, component, options);
   });
-  
-  // Draw nodes and pins
-  circuit.nodes.forEach(node => {
-    const isHighlighted = node.id === options.highlightedNodeId;
-    drawNode(ctx, node, isHighlighted, options);
-    
-    // Draw voltage labels if enabled
-    if (options.showVoltages && Math.abs(node.voltage) > 0.01) {
-      drawVoltageLabel(ctx, node);
-    }
-  });
 }
 
-function drawGrid(ctx: CanvasRenderingContext2D, theme: string): void {
-  const width = ctx.canvas.width;
-  const height = ctx.canvas.height;
-  const gridSize = 20;
-  
-  ctx.strokeStyle = theme === 'light' ? '#f0f0f0' : '#333333';
-  ctx.lineWidth = 1;
-  
-  // Vertical lines
-  for (let x = 0; x < width; x += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
-  
-  // Horizontal lines
-  for (let y = 0; y < height; y += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
-}
-
-function drawWire(
-  ctx: CanvasRenderingContext2D, 
-  wire: Wire, 
-  nodes: Node[],
-  circuit: Circuit,
-  options: RenderOptions
-): void {
-  // Find connected nodes
-  const startNode = nodes.find(n => n.id === wire.nodeIds[0]);
-  const endNode = nodes.find(n => n.id === wire.nodeIds[1]);
-  
-  if (!startNode || !endNode) return;
-  
-  const current = Math.abs(wire.current);
-  const lineWidth = 2 + Math.min(current * 3, 4); // Thicker for higher current
-  
-  // Wire color based on current
-  let color: string;
-  if (current < 0.001) {
-    color = options.theme === 'light' ? '#333' : '#aaa';
-  } else if (wire.current > 0) {
-    color = options.theme === 'light' ? '#3366ff' : '#66aaff'; // Blue for positive
-  } else {
-    color = options.theme === 'light' ? '#ff3366' : '#ff6699'; // Red for negative
-  }
-  
-  ctx.strokeStyle = color;
-  ctx.lineWidth = lineWidth;
-  
-  // Draw wire using path if available, otherwise direct line
-  ctx.beginPath();
-  
-  if (wire.path && wire.path.length > 1) {
-    // Use stored path
-    ctx.moveTo(wire.path[0].x, wire.path[0].y);
-    for (let i = 1; i < wire.path.length; i++) {
-      ctx.lineTo(wire.path[i].x, wire.path[i].y);
-    }
-  } else {
-    // Calculate a path if not available
-    const path = calculateWirePath(
-      startNode.position, 
-      endNode.position
-    );
-    
-    ctx.moveTo(path[0].x, path[0].y);
-    for (let i = 1; i < path.length; i++) {
-      ctx.lineTo(path[i].x, path[i].y);
-    }
-  }
-  
-  ctx.stroke();
-  
-  // Draw current label if enabled
-  if (options.showCurrents && Math.abs(wire.current) > 0.001) {
-    drawCurrentLabel(ctx, wire, startNode, endNode);
-  }
-}
-
-function drawNode(
-  ctx: CanvasRenderingContext2D, 
-  node: Node, 
-  isHighlighted: boolean,
-  options: RenderOptions
-): void {
-  const radius = isHighlighted ? 6 : 4;
-  
-  ctx.fillStyle = isHighlighted 
-    ? '#ff6600' 
-    : options.theme === 'light' ? '#333' : '#ccc';
-  
-  ctx.beginPath();
-  ctx.arc(node.position.x, node.position.y, radius, 0, Math.PI * 2);
-  ctx.fill();
-}
-
+/**
+ * Draws a single component
+ */
 function drawComponent(
   ctx: CanvasRenderingContext2D, 
   component: Component,
@@ -170,6 +53,9 @@ function drawComponent(
   ctx.restore();
 }
 
+/**
+ * Draws a component pin
+ */
 function drawPin(
   ctx: CanvasRenderingContext2D,
   pin: Pin,
@@ -182,6 +68,9 @@ function drawPin(
   ctx.fill();
 }
 
+/**
+ * Draws a battery component
+ */
 function drawBattery(
   ctx: CanvasRenderingContext2D, 
   component: Component,
@@ -219,6 +108,9 @@ function drawBattery(
   ctx.fillText(`${voltage}V`, 0, 15);
 }
 
+/**
+ * Draws a resistor component
+ */
 function drawResistor(
   ctx: CanvasRenderingContext2D, 
   component: Component,
@@ -257,6 +149,9 @@ function drawResistor(
   ctx.fillText(label, 0, -15);
 }
 
+/**
+ * Draws an LED component
+ */
 function drawLED(
   ctx: CanvasRenderingContext2D, 
   component: Component,
@@ -333,6 +228,9 @@ function drawLED(
   ctx.stroke();
 }
 
+/**
+ * Draws a switch component
+ */
 function drawSwitch(
   ctx: CanvasRenderingContext2D, 
   component: Component,
@@ -370,65 +268,4 @@ function drawSwitch(
   ctx.moveTo(20, 0);
   ctx.lineTo(30, 0);
   ctx.stroke();
-}
-
-function drawVoltageLabel(ctx: CanvasRenderingContext2D, node: Node): void {
-  const voltage = node.voltage.toFixed(1);
-  
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#0066cc';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText(`${voltage}V`, node.position.x, node.position.y + 5);
-}
-
-function drawCurrentLabel(
-  ctx: CanvasRenderingContext2D,
-  wire: Wire,
-  startNode: Node,
-  endNode: Node
-): void {
-  // Calculate position for the label
-  let midX, midY;
-  
-  if (wire.path && wire.path.length > 1) {
-    // If we have a path with multiple segments, put label at middle segment
-    const middleIdx = Math.floor(wire.path.length / 2);
-    const pt1 = wire.path[middleIdx - 1];
-    const pt2 = wire.path[middleIdx];
-    midX = (pt1.x + pt2.x) / 2;
-    midY = (pt1.y + pt2.y) / 2;
-  } else {
-    // Otherwise use midpoint of straight line
-    midX = (startNode.position.x + endNode.position.x) / 2;
-    midY = (startNode.position.y + endNode.position.y) / 2;
-  }
-  
-  // Format current value
-  let currentText: string;
-  const current = Math.abs(wire.current);
-  
-  if (current < 0.001) {
-    currentText = `${(current * 1000000).toFixed(1)}µA`;
-  } else if (current < 1) {
-    currentText = `${(current * 1000).toFixed(1)}mA`;
-  } else {
-    currentText = `${current.toFixed(2)}A`;
-  }
-  
-  // Add direction arrow
-  const directionChar = wire.current > 0 ? '→' : '←';
-  currentText = `${currentText} ${directionChar}`;
-  
-  // Draw background for better readability
-  const textWidth = ctx.measureText(currentText).width;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.fillRect(midX - textWidth/2 - 2, midY - 15, textWidth + 4, 16);
-  
-  // Draw text
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#cc0000';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(currentText, midX, midY - 2);
 }

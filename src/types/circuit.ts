@@ -44,5 +44,5 @@ export interface RenderOptions {
   theme: 'light' | 'dark';
 }
 
-// Update this type to include 'wire' for consistency
+// Updated to include 'wire' for consistency
 export type CircuitItemType = 'component' | 'node' | 'pin' | 'wire';
