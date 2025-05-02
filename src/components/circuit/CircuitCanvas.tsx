@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Circuit, ComponentType, Component, Pin, Node } from '@/types/circuit';
+import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { renderCircuit } from '@/lib/renderer';
 import { 
   findItemAtPosition, 
@@ -34,7 +34,7 @@ export function CircuitCanvas({
 
   // Interaction state
   const [isDragging, setIsDragging] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<{ id: string, type: 'component' | 'node' | 'wire', segmentIndex?: number } | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{ id: string, type: CircuitItemType, segmentIndex?: number } | null>(null);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [currentMousePos, setCurrentMousePos] = useState({ x: 0, y: 0 });
   
@@ -48,7 +48,7 @@ export function CircuitCanvas({
   
   // Hover state
   const [hoveredItem, setHoveredItem] = useState<{
-    type: 'pin' | 'component' | 'node' | 'wire';
+    type: CircuitItemType;
     id: string;
     pinId?: string;
     componentId?: string;

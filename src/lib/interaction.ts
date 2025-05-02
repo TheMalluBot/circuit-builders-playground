@@ -1,5 +1,5 @@
 
-import { Circuit, Component, Pin } from '@/types/circuit';
+import { Circuit, Component, Pin, CircuitItemType } from '@/types/circuit';
 
 export function findItemAtPosition(
   circuit: Circuit,
@@ -7,7 +7,7 @@ export function findItemAtPosition(
   y: number,
   nodeRadius: number = 10,
   componentRadius: number = 30
-): { type: 'component' | 'node' | 'pin'; id: string; pinId?: string; componentId?: string } | null {
+): { type: CircuitItemType; id: string; pinId?: string; componentId?: string; segmentIndex?: number } | null {
   // Check for pins first (highest priority for connections)
   for (const component of circuit.components) {
     for (const pin of component.pins) {
