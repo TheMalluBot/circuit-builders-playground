@@ -4,7 +4,7 @@ import { Circuit } from '@/types/circuit';
 import { renderCircuit } from '@/lib/renderer';
 
 /**
- * Hook to handle canvas drawing
+ * Hook to handle canvas drawing with enhanced wire preview
  */
 export function useCanvasDrawing(
   canvasRef: RefObject<HTMLCanvasElement>,
@@ -57,7 +57,7 @@ export function useCanvasDrawing(
 }
 
 /**
- * Draw connection preview on the canvas
+ * Draw enhanced connection preview on the canvas with smart routing
  */
 function drawConnectionPreview(
   ctx: CanvasRenderingContext2D,
@@ -74,6 +74,7 @@ function drawConnectionPreview(
   
   const { path, isValidTarget } = previewData;
   
+  // Draw the wire path with enhanced visual style
   ctx.strokeStyle = isValidTarget ? '#4299e1' : '#9CA3AF';
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 3]);

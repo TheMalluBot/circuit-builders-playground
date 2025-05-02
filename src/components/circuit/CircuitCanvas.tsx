@@ -28,7 +28,7 @@ export function CircuitCanvas({
 }: CircuitCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Set up canvas interactions
+  // Set up canvas interactions with enhanced wire connection experience
   const {
     hoveredItem,
     hoveredNodeId,
@@ -58,7 +58,7 @@ export function CircuitCanvas({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Set up canvas drawing with properly wrapped connectionPreview
+  // Set up canvas drawing with enhanced wire preview
   useCanvasDrawing(canvasRef, circuit, {
     showVoltages,
     showCurrents,
@@ -70,7 +70,7 @@ export function CircuitCanvas({
     }
   });
   
-  // Determine cursor based on current state
+  // Determine cursor based on current state for better visual feedback
   const getCursor = () => {
     if (selectedComponent) return 'crosshair';
     if (connectionPreview.isConnecting) return 'pointer';

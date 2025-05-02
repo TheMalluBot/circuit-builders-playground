@@ -6,7 +6,7 @@ import { getMousePosition } from '../utils/CanvasUtils';
 import { useConnectionPreview } from './useConnectionPreview';
 
 /**
- * Hook to handle canvas interactions
+ * Hook to handle canvas interactions with improved wire connection experience
  */
 export function useCanvasInteractions(
   canvasRef: RefObject<HTMLCanvasElement>,
@@ -32,7 +32,7 @@ export function useCanvasInteractions(
     position?: { x: number; y: number };
   } | null>(null);
   
-  // Connection state
+  // Connection state with enhanced preview
   const connectionPreview = useConnectionPreview();
   
   // Handle canvas click for component placement and interaction
@@ -58,7 +58,7 @@ export function useCanvasInteractions(
             }
           }
           connectionPreview.resetConnection();
-        } else {
+        } else if (item.position) {
           // Start new connection
           const component = circuit.components.find(c => c.id === item.componentId);
           const pin = component?.pins.find(p => p.id === item.pinId);
@@ -106,7 +106,7 @@ export function useCanvasInteractions(
     }
   }, [isDragging, canvasRef, circuit, options, connectionPreview]);
   
-  // Handle mouse down for dragging components
+  // Handle mouse down for dragging components and starting wire connections
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (connectionPreview.isConnecting) return; // Don't start drag if we're making a connection
     
@@ -118,15 +118,33 @@ export function useCanvasInteractions(
     // Find if we're clicking on a draggable item
     const item = findHoveredItem(circuit, x, y);
     
-    if (item && (item.type === 'component' || item.type === 'wire')) {
-      setIsDragging(true);
-      setDraggedItem(item);
-      setDragStartPos({ x, y });
-      e.preventDefault(); // Prevent text selection during drag
+    if (item) {
+      if (item.type === 'component' || item.type === 'wire') {
+        setIsDragging(true);
+        setDraggedItem(item);
+        setDragStartPos({ x, y });
+        e.preventDefault(); // Prevent text selection during drag
+      } else if (item.type === 'pin' && item.position) {
+        // Start wire connection immediately on mouse down
+        const component = circuit.components.find(c => c.id === item.componentId);
+        const pin = component?.pins.find(p => p.id === item.pinId);
+        
+        if (component && pin) {
+          connectionPreview.startConnection({
+            nodeId: pin.nodeId,
+            pinId: pin.id,
+            componentId: component.id,
+            position: item.position
+          });
+          
+          // Initialize connection end at the same point
+          connectionPreview.updateConnectionEnd(item.position, null);
+        }
+      }
     }
-  }, [canvasRef, circuit, connectionPreview.isConnecting]);
+  }, [canvasRef, circuit, connectionPreview]);
   
-  // Handle mouse move for dragging and hovering
+  // Handle mouse move for dragging and wire connections
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -143,13 +161,13 @@ export function useCanvasInteractions(
       connectionPreview.updateConnectionEnd({ x, y }, hoveredNodeId);
     }
     
-    // Handle hovering
+    // Handle hovering for better visual feedback
     if (!isDragging) {
       const item = findHoveredItem(circuit, x, y);
       setHoveredItem(item);
     }
     
-    // Handle dragging
+    // Handle dragging components or wire segments
     if (isDragging && draggedItem) {
       const dx = x - dragStartPos.x;
       const dy = y - dragStartPos.y;
@@ -166,16 +184,32 @@ export function useCanvasInteractions(
     }
   }, [canvasRef, circuit, isDragging, draggedItem, dragStartPos, connectionPreview]);
   
-  // Handle mouse up to end dragging
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    setDraggedItem(null);
+  // Handle mouse up to end dragging or complete connections
+  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    // End component or wire dragging
+    if (isDragging) {
+      setIsDragging(false);
+      setDraggedItem(null);
+    }
     
-    // Also complete any active connection
+    // Complete any active wire connection
     if (connectionPreview.isConnecting) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const { x, y } = getMousePosition(e, canvas);
+        const targetItem = findHoveredItem(circuit, x, y);
+        
+        if (targetItem && (targetItem.type === 'node' || targetItem.type === 'pin')) {
+          if (connectionPreview.connectionStart?.nodeId && targetItem.id && 
+              connectionPreview.connectionStart.nodeId !== targetItem.id) {
+            // Connect if we're on a different node or pin
+            options.onConnectNodes(connectionPreview.connectionStart.nodeId, targetItem.id);
+          }
+        }
+      }
       connectionPreview.resetConnection();
     }
-  }, [connectionPreview]);
+  }, [isDragging, connectionPreview, canvasRef, circuit, options]);
   
   return {
     hoveredItem,
