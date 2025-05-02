@@ -27,6 +27,14 @@ export function ComponentPalette({ selectedComponent, onSelectComponent }: Compo
               : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'
           }`}
           onClick={() => onSelectComponent(component.type)}
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData('componentType', component.type);
+            // Set drag image offset to improve component placement
+            const img = new Image();
+            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // Transparent 1px image
+            e.dataTransfer.setDragImage(img, 0, 0);
+          }}
         >
           {component.icon}
           {component.label}

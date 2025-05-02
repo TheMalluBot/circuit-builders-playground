@@ -24,11 +24,12 @@ const PlaygroundPage = () => {
           <div className="bg-blue-50 p-4 rounded-lg mb-6">
             <h2 className="text-lg font-semibold mb-2">How to use:</h2>
             <ol className="list-decimal ml-5 space-y-1">
-              <li>Select a component from the palette above</li>
-              <li>Click on the canvas to place the component</li>
-              <li>Click on component pins to create connections between components</li>
-              <li>Use the Start button to see your circuit in action</li>
-              <li>Click on switches to toggle them on/off during simulation</li>
+              <li>Select a component from the palette above or drag it onto the canvas</li>
+              <li>Click on component pins to create smart-routed connections between components</li>
+              <li>Press <kbd className="px-2 py-1 bg-gray-100 border rounded">R</kbd> when hovering over a component to rotate it</li>
+              <li>Click on wires to modify their routing</li>
+              <li>Use the simulation controls to run your circuit and see it in action</li>
+              <li>Toggle switches on/off to control the flow of current in your circuit</li>
             </ol>
           </div>
           

@@ -27,6 +27,8 @@ export interface Wire {
   id: string;
   nodeIds: [string, string]; // Start and end nodes
   current: number;
+  // Added path property for wire routing visualization
+  path?: { x: number; y: number }[];
 }
 
 export interface Circuit {

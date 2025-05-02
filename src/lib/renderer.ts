@@ -1,5 +1,5 @@
-
-import { Circuit, Component, Node, Wire, RenderOptions } from '@/types/circuit';
+import { Circuit, Component, Node, Wire, RenderOptions, Pin } from '@/types/circuit';
+import { calculatePinPosition, calculateWirePath } from './interaction';
 
 export function renderCircuit(
   ctx: CanvasRenderingContext2D, 
@@ -14,7 +14,7 @@ export function renderCircuit(
   
   // Draw wires first (so they appear behind components)
   circuit.wires.forEach(wire => {
-    drawWire(ctx, wire, circuit.nodes, options);
+    drawWire(ctx, wire, circuit.nodes, circuit, options);
   });
   
   // Draw components
@@ -22,7 +22,7 @@ export function renderCircuit(
     drawComponent(ctx, component, options);
   });
   
-  // Draw nodes
+  // Draw nodes and pins
   circuit.nodes.forEach(node => {
     const isHighlighted = node.id === options.highlightedNodeId;
     drawNode(ctx, node, isHighlighted, options);
@@ -63,6 +63,7 @@ function drawWire(
   ctx: CanvasRenderingContext2D, 
   wire: Wire, 
   nodes: Node[],
+  circuit: Circuit,
   options: RenderOptions
 ): void {
   // Find connected nodes
@@ -87,10 +88,28 @@ function drawWire(
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
   
-  // Draw wire
+  // Draw wire using path if available, otherwise direct line
   ctx.beginPath();
-  ctx.moveTo(startNode.position.x, startNode.position.y);
-  ctx.lineTo(endNode.position.x, endNode.position.y);
+  
+  if (wire.path && wire.path.length > 1) {
+    // Use stored path
+    ctx.moveTo(wire.path[0].x, wire.path[0].y);
+    for (let i = 1; i < wire.path.length; i++) {
+      ctx.lineTo(wire.path[i].x, wire.path[i].y);
+    }
+  } else {
+    // Calculate a path if not available
+    const path = calculateWirePath(
+      startNode.position, 
+      endNode.position
+    );
+    
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) {
+      ctx.lineTo(path[i].x, path[i].y);
+    }
+  }
+  
   ctx.stroke();
   
   // Draw current label if enabled
@@ -143,7 +162,24 @@ function drawComponent(
       break;
   }
   
+  // Draw pins for each component
+  component.pins.forEach(pin => {
+    drawPin(ctx, pin, options);
+  });
+  
   ctx.restore();
+}
+
+function drawPin(
+  ctx: CanvasRenderingContext2D,
+  pin: Pin,
+  options: RenderOptions
+): void {
+  // Draw the pin as a small circle
+  ctx.fillStyle = options.theme === 'light' ? '#555' : '#ddd';
+  ctx.beginPath();
+  ctx.arc(pin.position.x, pin.position.y, 3, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawBattery(
@@ -352,9 +388,21 @@ function drawCurrentLabel(
   startNode: Node,
   endNode: Node
 ): void {
-  // Calculate midpoint of wire
-  const midX = (startNode.position.x + endNode.position.x) / 2;
-  const midY = (startNode.position.y + endNode.position.y) / 2;
+  // Calculate position for the label
+  let midX, midY;
+  
+  if (wire.path && wire.path.length > 1) {
+    // If we have a path with multiple segments, put label at middle segment
+    const middleIdx = Math.floor(wire.path.length / 2);
+    const pt1 = wire.path[middleIdx - 1];
+    const pt2 = wire.path[middleIdx];
+    midX = (pt1.x + pt2.x) / 2;
+    midY = (pt1.y + pt2.y) / 2;
+  } else {
+    // Otherwise use midpoint of straight line
+    midX = (startNode.position.x + endNode.position.x) / 2;
+    midY = (startNode.position.y + endNode.position.y) / 2;
+  }
   
   // Format current value
   let currentText: string;
