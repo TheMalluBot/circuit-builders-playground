@@ -58,12 +58,16 @@ export function CircuitCanvas({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Set up canvas drawing
+  // Set up canvas drawing with properly wrapped connectionPreview
   useCanvasDrawing(canvasRef, circuit, {
     showVoltages,
     showCurrents,
     hoveredNodeId,
-    connectionPreview
+    connectionPreview: {
+      getPreviewPath: (c: Circuit) => connectionPreview.getPreviewPath(c),
+      connectionStart: connectionPreview.connectionStart,
+      isConnecting: connectionPreview.isConnecting
+    }
   });
   
   // Determine cursor based on current state

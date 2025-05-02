@@ -14,7 +14,7 @@ export function useCanvasDrawing(
     showCurrents: boolean;
     hoveredNodeId: string | null;
     connectionPreview?: {
-      getPreviewPath: () => any;
+      getPreviewPath: (circuit: Circuit) => any;
       connectionStart: any;
       isConnecting: boolean;
     };
@@ -41,7 +41,7 @@ export function useCanvasDrawing(
       
       // Draw connection preview if active
       if (options.connectionPreview?.isConnecting) {
-        drawConnectionPreview(ctx, options.connectionPreview);
+        drawConnectionPreview(ctx, options.connectionPreview, circuit);
       }
       
       // Request next frame
@@ -62,13 +62,14 @@ export function useCanvasDrawing(
 function drawConnectionPreview(
   ctx: CanvasRenderingContext2D,
   connectionPreview: {
-    getPreviewPath: () => any;
+    getPreviewPath: (circuit: Circuit) => any;
     connectionStart: any;
-  }
+  },
+  circuit: Circuit
 ) {
   if (!connectionPreview.connectionStart) return;
   
-  const previewData = connectionPreview.getPreviewPath();
+  const previewData = connectionPreview.getPreviewPath(circuit);
   if (!previewData) return;
   
   const { path, isValidTarget } = previewData;
