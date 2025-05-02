@@ -66,14 +66,15 @@ export function CircuitCanvas({
     connectionPreview: {
       getPreviewPath: (c: Circuit) => connectionPreview.getPreviewPath(c),
       connectionStart: connectionPreview.connectionStart,
-      isConnecting: connectionPreview.isConnecting
+      isConnecting: connectionPreview.isConnecting,
+      magneticSnap: connectionPreview.magneticSnap
     }
   });
   
   // Determine cursor based on current state for better visual feedback
   const getCursor = () => {
     if (selectedComponent) return 'crosshair';
-    if (connectionPreview.isConnecting) return 'pointer';
+    if (connectionPreview.isConnecting) return 'crosshair';
     if (hoveredItem?.type === 'pin') return 'pointer';
     if (isDragging) return 'grabbing';
     return 'default';

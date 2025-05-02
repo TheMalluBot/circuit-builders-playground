@@ -1,11 +1,12 @@
 
 import { useState, useCallback } from 'react';
-import { Node, Circuit } from '@/types/circuit';
+import { Node, Circuit, Component, Pin } from '@/types/circuit';
 import { calculateWirePath } from '@/lib/interaction';
+import { isNearPin } from '@/lib/simulator/utils/geometryUtils';
 
 /**
  * Hook to manage wire connection previews with enhanced visual feedback
- * and smart wire routing
+ * and smart wire routing with magnetic snapping
  */
 export function useConnectionPreview() {
   // Connection state for wire drawing
@@ -18,6 +19,10 @@ export function useConnectionPreview() {
   
   const [currentMousePos, setCurrentMousePos] = useState({ x: 0, y: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [magneticSnap, setMagneticSnap] = useState<{ 
+    active: boolean; 
+    position: { x: number; y: number } 
+  }>({ active: false, position: { x: 0, y: 0 } });
   
   // Start connection from a pin
   const startConnection = useCallback((data: {
@@ -32,81 +37,141 @@ export function useConnectionPreview() {
   // Update connection end position during drag
   const updateConnectionEnd = useCallback((
     position: { x: number; y: number },
-    nodeId: string | null
+    nodeId: string | null,
+    circuit: Circuit
   ) => {
     setCurrentMousePos(position);
     setHoveredNodeId(nodeId);
-  }, []);
+    
+    // Check if we're near any pin for magnetic snapping
+    let foundSnappablePin = false;
+    
+    if (circuit && connectionStart) {
+      // Don't snap to the starting component's pins
+      const componentsToCheck = circuit.components.filter(c => 
+        c.id !== connectionStart.componentId
+      );
+      
+      // Find the closest pin within snapping distance
+      let closestDistance = 15; // Snap threshold
+      let closestPin: { position: { x: number; y: number }; nodeId: string | null } | null = null;
+      
+      for (const comp of componentsToCheck) {
+        for (const pin of comp.pins) {
+          // Calculate actual pin position
+          const radians = (comp.rotation * Math.PI) / 180;
+          const cos = Math.cos(radians);
+          const sin = Math.sin(radians);
+          
+          const rotatedX = pin.position.x * cos - pin.position.y * sin;
+          const rotatedY = pin.position.x * sin + pin.position.y * cos;
+          
+          const pinPos = {
+            x: comp.position.x + rotatedX,
+            y: comp.position.y + rotatedY
+          };
+          
+          // Calculate distance
+          const dx = position.x - pinPos.x;
+          const dy = position.y - pinPos.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestPin = { 
+              position: pinPos,
+              nodeId: pin.nodeId || `${comp.id}-${pin.id}`
+            };
+          }
+        }
+      }
+      
+      if (closestPin) {
+        setMagneticSnap({ 
+          active: true, 
+          position: closestPin.position 
+        });
+        setHoveredNodeId(closestPin.nodeId);
+        foundSnappablePin = true;
+      }
+    }
+    
+    if (!foundSnappablePin) {
+      setMagneticSnap({ active: false, position: { x: 0, y: 0 } });
+    }
+  }, [connectionStart]);
   
   // Reset connection state
   const resetConnection = useCallback(() => {
     setConnectionStart(null);
     setHoveredNodeId(null);
+    setMagneticSnap({ active: false, position: { x: 0, y: 0 } });
   }, []);
   
   // Get smart wire path for preview
   const getPreviewPath = useCallback((circuit: Circuit) => {
-    if (!connectionStart || !currentMousePos) return null;
+    if (!connectionStart) return null;
     
-    // Find target node position if hovering over one
-    let endPos = currentMousePos;
-    let isValidTarget = false;
+    // Use magnetic snapping position if active, otherwise use mouse position
+    const endPos = magneticSnap.active 
+      ? magneticSnap.position 
+      : currentMousePos;
     
-    if (hoveredNodeId) {
-      const targetNode = circuit.nodes.find(n => n.id === hoveredNodeId);
-      if (targetNode) {
-        endPos = targetNode.position;
-        isValidTarget = true;
-      } else {
-        // Check if it's a pin's node ID
-        for (const component of circuit.components) {
-          for (const pin of component.pins) {
-            if (pin.nodeId === hoveredNodeId) {
-              // Found matching pin, use its position
-              const pinPos = calculatePinPosition(component, pin);
-              if (pinPos) {
-                endPos = pinPos;
-                isValidTarget = true;
-                break;
-              }
-            }
-          }
-          if (isValidTarget) break;
-        }
-      }
-    }
+    // Determine if this is a valid target
+    const isValidTarget = !!hoveredNodeId && 
+        hoveredNodeId !== connectionStart.nodeId && 
+        connectionStart.componentId !== (circuit?.components.find(c => 
+          c.pins.some(p => p.nodeId === hoveredNodeId))?.id || "");
     
-    // Calculate path with smart routing
-    const path = calculateWirePath(connectionStart.position, endPos);
+    // Calculate path with smart routing (L-shaped)
+    const path = calculateSmartWirePath(connectionStart.position, endPos);
     
     return {
       path,
       isValidTarget,
       endPos
     };
-  }, [connectionStart, currentMousePos, hoveredNodeId]);
-  
-  // Calculate absolute position of a pin based on component position and rotation
-  const calculatePinPosition = (component: any, pin: any): { x: number; y: number } => {
-    const radians = (component.rotation * Math.PI) / 180;
-    const cos = Math.cos(radians);
-    const sin = Math.sin(radians);
+  }, [connectionStart, currentMousePos, hoveredNodeId, magneticSnap]);
+
+  // Improved L-shaped wire routing algorithm
+  const calculateSmartWirePath = (start: { x: number; y: number }, end: { x: number; y: number }) => {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
     
-    // Apply rotation transformation
-    const rotatedX = pin.position.x * cos - pin.position.y * sin;
-    const rotatedY = pin.position.x * sin + pin.position.y * cos;
+    // If points are very close, just use a direct line
+    if (absDx < 10 && absDy < 10) {
+      return [start, end];
+    }
     
-    // Add component position to get absolute pin position
-    return {
-      x: component.position.x + rotatedX,
-      y: component.position.y + rotatedY
-    };
+    // Determine the bend point based on which dimension is larger
+    // This creates more natural-looking L-shaped paths
+    const bendPoint = { x: 0, y: 0 };
+    
+    if (absDx > absDy) {
+      // Horizontal distance is greater, bend vertically first
+      bendPoint.x = start.x + dx;
+      bendPoint.y = start.y;
+    } else {
+      // Vertical distance is greater, bend horizontally first
+      bendPoint.x = start.x;
+      bendPoint.y = start.y + dy;
+    }
+    
+    // Return the three points for the L-shaped wire
+    return [
+      { x: start.x, y: start.y },
+      bendPoint,
+      { x: end.x, y: end.y }
+    ];
   };
   
   return {
     connectionStart,
     currentMousePos,
     hoveredNodeId,
+    magneticSnap,
     startConnection,
     updateConnectionEnd,
     resetConnection,

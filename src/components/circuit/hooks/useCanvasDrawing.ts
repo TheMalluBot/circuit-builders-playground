@@ -17,6 +17,7 @@ export function useCanvasDrawing(
       getPreviewPath: (circuit: Circuit) => any;
       connectionStart: any;
       isConnecting: boolean;
+      magneticSnap?: { active: boolean; position: { x: number; y: number } };
     };
   }
 ) {
@@ -64,6 +65,7 @@ function drawConnectionPreview(
   connectionPreview: {
     getPreviewPath: (circuit: Circuit) => any;
     connectionStart: any;
+    magneticSnap?: { active: boolean; position: { x: number; y: number } };
   },
   circuit: Circuit
 ) {
@@ -89,12 +91,37 @@ function drawConnectionPreview(
   ctx.stroke();
   ctx.setLineDash([]);
   
-  // Draw highlight on valid target pin
-  if (isValidTarget) {
+  // Draw highlight on valid target pin or magnetic snap point
+  if (isValidTarget || (connectionPreview.magneticSnap && connectionPreview.magneticSnap.active)) {
     const endPos = path[path.length - 1];
-    ctx.fillStyle = '#4299e1';
+    
+    // Draw outer glow
+    const gradient = ctx.createRadialGradient(endPos.x, endPos.y, 2, endPos.x, endPos.y, 12);
+    gradient.addColorStop(0, isValidTarget ? 'rgba(66, 153, 225, 0.8)' : 'rgba(156, 163, 175, 0.8)');
+    gradient.addColorStop(1, 'rgba(66, 153, 225, 0)');
+    ctx.fillStyle = gradient;
+    
     ctx.beginPath();
-    ctx.arc(endPos.x, endPos.y, 8, 0, Math.PI * 2);
+    ctx.arc(endPos.x, endPos.y, 12, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw terminal point
+    ctx.fillStyle = isValidTarget ? '#4299e1' : '#9CA3AF';
+    ctx.beginPath();
+    ctx.arc(endPos.x, endPos.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add white inner circle for contrast
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(endPos.x, endPos.y, 3, 0, Math.PI * 2);
     ctx.fill();
   }
+  
+  // Draw starting point highlight
+  const startPos = path[0];
+  ctx.fillStyle = '#4299e1';
+  ctx.beginPath();
+  ctx.arc(startPos.x, startPos.y, 6, 0, Math.PI * 2);
+  ctx.fill();
 }

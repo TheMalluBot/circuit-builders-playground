@@ -138,7 +138,8 @@ export function useCanvasInteractions(
           });
           
           // Initialize connection end at the same point
-          connectionPreview.updateConnectionEnd(item.position, null);
+          connectionPreview.updateConnectionEnd(item.position, null, circuit);
+          e.preventDefault(); // Prevent text selection during drag
         }
       }
     }
@@ -158,11 +159,11 @@ export function useCanvasInteractions(
         ? hoveredItem.id 
         : null;
         
-      connectionPreview.updateConnectionEnd({ x, y }, hoveredNodeId);
+      connectionPreview.updateConnectionEnd({ x, y }, hoveredNodeId, circuit);
     }
     
     // Handle hovering for better visual feedback
-    if (!isDragging) {
+    if (!isDragging && !connectionPreview.isConnecting) {
       const item = findHoveredItem(circuit, x, y);
       setHoveredItem(item);
     }
@@ -201,7 +202,8 @@ export function useCanvasInteractions(
         
         if (targetItem && (targetItem.type === 'node' || targetItem.type === 'pin')) {
           if (connectionPreview.connectionStart?.nodeId && targetItem.id && 
-              connectionPreview.connectionStart.nodeId !== targetItem.id) {
+              connectionPreview.connectionStart.nodeId !== targetItem.id &&
+              connectionPreview.connectionStart.componentId !== targetItem.componentId) {
             // Connect if we're on a different node or pin
             options.onConnectNodes(connectionPreview.connectionStart.nodeId, targetItem.id);
           }
@@ -213,7 +215,7 @@ export function useCanvasInteractions(
   
   return {
     hoveredItem,
-    hoveredNodeId: hoveredItem?.type === 'node' ? hoveredItem.id : null,
+    hoveredNodeId: connectionPreview.hoveredNodeId || (hoveredItem?.type === 'node' ? hoveredItem.id : null),
     connectionPreview,
     handleCanvasClick,
     handleMouseDown,
