@@ -1,5 +1,5 @@
 import { useReducer, useCallback, useEffect, useRef } from 'react';
-import { Circuit, Component, Node, Wire, ComponentType } from '@/types/circuit';
+import { Circuit, Component, Node, Wire, ComponentType, CircuitItemType } from '@/types/circuit';
 import { createComponent } from '@/lib/components';
 import { solveCircuit } from '@/lib/solver';
 
@@ -13,6 +13,8 @@ type SimulationAction =
   | { type: 'CONNECT_NODES'; sourceId: string; targetId: string }
   | { type: 'TOGGLE_SWITCH'; componentId: string }
   | { type: 'MOVE_COMPONENT'; componentId: string; dx: number; dy: number }
+  | { type: 'ROTATE_COMPONENT'; componentId: string; angle: number }
+  | { type: 'DELETE_ITEM'; itemType: CircuitItemType; itemId: string }
   | { type: 'START_SIMULATION' }
   | { type: 'STOP_SIMULATION' }
   | { type: 'RESET_SIMULATION' }
@@ -76,7 +78,14 @@ function simulationReducer(state: SimulationState, action: SimulationAction): Si
       const newWire: Wire = {
         id: `wire_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
         nodeIds: [action.sourceId, action.targetId],
-        current: 0
+        current: 0,
+        // Add path for wire routing visualization
+        path: [
+          { x: sourceNode.position.x, y: sourceNode.position.y },
+          { x: (sourceNode.position.x + targetNode.position.x) / 2, y: sourceNode.position.y },
+          { x: (sourceNode.position.x + targetNode.position.x) / 2, y: targetNode.position.y },
+          { x: targetNode.position.x, y: targetNode.position.y }
+        ]
       };
       
       return {
@@ -122,7 +131,7 @@ function simulationReducer(state: SimulationState, action: SimulationAction): Si
             y: component.position.y + action.dy
           };
           
-          // Update component and its pins
+          // Update component position
           return {
             ...component,
             position: newPosition
@@ -142,8 +151,8 @@ function simulationReducer(state: SimulationState, action: SimulationAction): Si
           return {
             ...node,
             position: {
-              x: movedComponent.position.x + action.dx + connectedPin.position.x,
-              y: movedComponent.position.y + action.dy + connectedPin.position.y
+              x: node.position.x + action.dx,
+              y: node.position.y + action.dy
             }
           };
         }
@@ -158,6 +167,104 @@ function simulationReducer(state: SimulationState, action: SimulationAction): Si
           nodes: updatedNodes
         }
       };
+    }
+    
+    case 'ROTATE_COMPONENT': {
+      // Find the component to rotate
+      const componentToRotate = state.circuit.components.find(c => c.id === action.componentId);
+      if (!componentToRotate) return state;
+      
+      // Calculate new rotation angle
+      const newRotation = (componentToRotate.rotation + action.angle) % 360;
+      
+      // Update component rotation
+      const updatedComponents = state.circuit.components.map(component => {
+        if (component.id === action.componentId) {
+          return {
+            ...component,
+            rotation: newRotation
+          };
+        }
+        return component;
+      });
+      
+      return {
+        ...state,
+        circuit: {
+          ...state.circuit,
+          components: updatedComponents
+        }
+      };
+    }
+    
+    case 'DELETE_ITEM': {
+      switch (action.itemType) {
+        case 'component': {
+          // Get the component to delete
+          const componentToDelete = state.circuit.components.find(c => c.id === action.itemId);
+          if (!componentToDelete) return state;
+          
+          // Get node IDs connected to this component's pins
+          const nodeIds = componentToDelete.pins
+            .map(pin => pin.nodeId)
+            .filter(nodeId => nodeId !== null) as string[];
+          
+          // Remove component
+          const updatedComponents = state.circuit.components.filter(c => c.id !== action.itemId);
+          
+          // Remove associated nodes
+          const updatedNodes = state.circuit.nodes.filter(n => !nodeIds.includes(n.id));
+          
+          // Remove wires connected to those nodes
+          const updatedWires = state.circuit.wires.filter(w => 
+            !nodeIds.includes(w.nodeIds[0]) && !nodeIds.includes(w.nodeIds[1])
+          );
+          
+          return {
+            ...state,
+            circuit: {
+              components: updatedComponents,
+              nodes: updatedNodes,
+              wires: updatedWires
+            }
+          };
+        }
+        
+        case 'wire': {
+          // Remove the wire
+          const updatedWires = state.circuit.wires.filter(w => w.id !== action.itemId);
+          
+          return {
+            ...state,
+            circuit: {
+              ...state.circuit,
+              wires: updatedWires
+            }
+          };
+        }
+        
+        case 'node': {
+          // Remove the node
+          const updatedNodes = state.circuit.nodes.filter(n => n.id !== action.itemId);
+          
+          // Remove wires connected to this node
+          const updatedWires = state.circuit.wires.filter(w => 
+            w.nodeIds[0] !== action.itemId && w.nodeIds[1] !== action.itemId
+          );
+          
+          return {
+            ...state,
+            circuit: {
+              ...state.circuit,
+              nodes: updatedNodes,
+              wires: updatedWires
+            }
+          };
+        }
+        
+        default:
+          return state;
+      }
     }
     
     case 'START_SIMULATION':
@@ -239,8 +346,10 @@ export function useSimulation() {
   }, [state.isRunning, state.circuit]);
   
   // Exposed actions
-  const addComponent = useCallback((type: ComponentType, x: number, y: number) => {
-    dispatch({ type: 'ADD_COMPONENT', componentType: type, x, y });
+  const addComponent = useCallback((type: ComponentType, position: { x: number, y: number }) => {
+    const componentId = `${type}_${Date.now()}`;
+    dispatch({ type: 'ADD_COMPONENT', componentType: type, x: position.x, y: position.y });
+    return componentId;
   }, []);
   
   const connectNodes = useCallback((sourceId: string, targetId: string) => {
@@ -253,6 +362,14 @@ export function useSimulation() {
   
   const moveComponent = useCallback((componentId: string, dx: number, dy: number) => {
     dispatch({ type: 'MOVE_COMPONENT', componentId, dx, dy });
+  }, []);
+  
+  const rotateComponent = useCallback((componentId: string, angle: number) => {
+    dispatch({ type: 'ROTATE_COMPONENT', componentId, angle });
+  }, []);
+  
+  const deleteItem = useCallback((itemType: CircuitItemType, itemId: string) => {
+    dispatch({ type: 'DELETE_ITEM', itemType, itemId });
   }, []);
   
   const startSimulation = useCallback(() => {
@@ -274,6 +391,8 @@ export function useSimulation() {
     connectNodes,
     toggleSwitch,
     moveComponent,
+    rotateComponent,
+    deleteItem,
     startSimulation,
     stopSimulation,
     resetSimulation
