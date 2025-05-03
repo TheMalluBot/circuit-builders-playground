@@ -32,9 +32,6 @@ interface CircuitCanvasProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  onDragStart?: () => void;
-  onConnectionStart?: () => void;
-  onOperationComplete?: () => void;
 }
 
 export function CircuitCanvas({
@@ -56,10 +53,7 @@ export function CircuitCanvas({
   onUndo,
   onRedo,
   canUndo,
-  canRedo,
-  onDragStart,
-  onConnectionStart,
-  onOperationComplete
+  canRedo
 }: CircuitCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -103,11 +97,8 @@ export function CircuitCanvas({
     onToggleSwitch,
     selectedWireId,
     selectWire,
-    onDragStart,
     onMoveComponent,
-    onMoveComplete,
-    onConnectionStart,
-    onOperationComplete
+    onMoveComplete
   });
   
   // Handle canvas resizing

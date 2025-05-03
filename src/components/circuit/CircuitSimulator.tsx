@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { ComponentPalette } from './ComponentPalette';
 import { CircuitCanvas } from './CircuitCanvas';
@@ -10,6 +9,7 @@ import { ComponentType, CircuitItemType, Circuit } from '@/types/circuit';
 import { useCircuitKeyboard } from '@/hooks/useCircuitKeyboard';
 import { useToast } from '@/hooks/use-toast';
 import { ActionFeedback } from './canvas/ActionFeedback';
+import { CursorModeFeedback } from './canvas/CursorModeFeedback';
 
 export function CircuitSimulator() {
   const { toast } = useToast();

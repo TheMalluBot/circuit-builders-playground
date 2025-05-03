@@ -1,92 +1,72 @@
 
 import React from 'react';
-import { Component } from '@/types/circuit';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { Circuit } from '@/types/circuit';
 
-interface InfoPanelProps {
+export interface InfoPanelProps {
   show: boolean;
   componentId: string | null;
   position: { x: number; y: number };
-  circuit: { components: Component[] };
+  circuit: Circuit;
+  onClose: () => void;  // Added onClose property
 }
 
-export function InfoPanel({ show, componentId, position, circuit }: InfoPanelProps) {
-  // Get the component for the info panel
-  const getSelectedComponent = () => {
-    if (!show || !componentId) return null;
-    return circuit.components.find(c => c.id === componentId);
-  };
-
-  // Format properties for display
-  const formatPropValue = (key: string, value: any): string => {
-    if (key === 'current') {
-      const current = Math.abs(value);
-      if (current < 0.001) return `${(current * 1000000).toFixed(2)} µA`;
-      if (current < 1) return `${(current * 1000).toFixed(2)} mA`;
-      return `${current.toFixed(2)} A`;
-    }
+export function InfoPanel({ show, componentId, position, circuit, onClose }: InfoPanelProps) {
+  if (!show || !componentId) return null;
+  
+  const component = circuit.components.find(c => c.id === componentId);
+  if (!component) return null;
+  
+  // Get component properties based on component type
+  const getComponentProperties = () => {
+    const type = component.id.split('_')[0];
     
-    if (key === 'voltage') return `${value.toFixed(2)} V`;
-    if (key === 'resistance') return `${value.toFixed(0)} Ω`;
-    if (key === 'power') {
-      const power = Math.abs(value);
-      if (power < 0.001) return `${(power * 1000000).toFixed(2)} µW`;
-      if (power < 1) return `${(power * 1000).toFixed(2)} mW`;
-      return `${power.toFixed(2)} W`;
+    switch (type) {
+      case 'battery':
+        return { voltage: '5V', type: 'DC' };
+      case 'resistor':
+        return { resistance: '1kΩ' };
+      case 'led':
+        return { color: 'Red', forwardVoltage: '1.8V' };
+      case 'switch':
+        return { state: component.state ? 'Closed' : 'Open' };
+      default:
+        return {};
     }
-    if (key === 'brightness') return `${(value * 100).toFixed(0)}%`;
-    if (key === 'temperature') return `${value.toFixed(1)} °C`;
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    
-    return String(value);
   };
-
-  const selectedComponent = getSelectedComponent();
-  if (!show || !selectedComponent) return null;
-
+  
+  const properties = getComponentProperties();
+  
   return (
     <div 
-      className="absolute bg-white shadow-lg rounded-md border border-gray-200 p-3 z-50"
+      className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[200px]"
       style={{
-        left: Math.min(position.x, window.innerWidth - 240),
-        top: Math.min(position.y, window.innerHeight - 300),
-        width: '220px'
+        left: position.x + 10,
+        top: position.y - 100
       }}
     >
-      <div className="flex justify-between items-center border-b pb-2 mb-2">
-        <h3 className="font-semibold text-sm capitalize">
-          {selectedComponent.type} Properties
-        </h3>
-        <button 
-          className="text-gray-500 hover:text-gray-700"
-          onClick={() => {}}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="font-medium">{component.id.split('_')[0].toUpperCase()}</h3>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-6 w-6" 
+          onClick={onClose}
         >
-          ✕
-        </button>
+          <X className="h-4 w-4" />
+        </Button>
       </div>
       
-      <div className="space-y-2 max-h-60 overflow-y-auto text-sm">
-        {selectedComponent && Object.entries(selectedComponent.properties)
-          .filter(([key]) => !key.includes('_') && typeof key === 'string' && key !== 'id')
-          .map(([key, value]) => (
-            <div key={key} className="grid grid-cols-3 gap-2">
-              <span className="text-gray-600 capitalize">{key}:</span>
-              <span className="col-span-2 font-medium">
-                {formatPropValue(key, value)}
-              </span>
-            </div>
-          ))}
-        
-        {selectedComponent.type === 'led' && (
-          <div className="mt-2 pt-2 border-t border-gray-100">
-            <div className="text-xs text-blue-600 font-medium mb-1">Real-time Values</div>
-            <div className={`h-3 rounded-full transition-all duration-200 bg-gradient-to-r from-yellow-200 to-yellow-400`} 
-              style={{ 
-                width: `${(selectedComponent.properties.brightness || 0) * 100}%`, 
-                opacity: (selectedComponent.properties.brightness || 0)
-              }}
-            />
+      <div className="space-y-2 text-sm">
+        <div>
+          <span className="text-gray-500">ID:</span> {component.id}
+        </div>
+        {Object.entries(properties).map(([key, value]) => (
+          <div key={key}>
+            <span className="text-gray-500">{key.charAt(0).toUpperCase() + key.slice(1)}:</span> {value}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
