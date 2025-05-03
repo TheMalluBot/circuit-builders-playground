@@ -14,7 +14,21 @@ export interface Component {
   position: { x: number; y: number };
   rotation: number;
   pins: Pin[];
-  properties: Record<string, any>;
+  properties: {
+    voltage?: number;
+    resistance?: number;
+    forwardVoltage?: number;
+    current?: number;
+    power?: number;
+    temperature?: number;
+    brightness?: number;
+    closed?: boolean;
+    active?: boolean;
+    currentDirection?: number;
+    internalResistance?: number;
+    stateOfCharge?: number;
+    [key: string]: any;
+  };
 }
 
 export interface Node {
@@ -29,7 +43,12 @@ export interface Wire {
   current: number;
   // Enhanced path property with control points for manipulating wire routes
   path: { x: number; y: number }[];
-  // New property to identify if wire is selected for manipulation
+  // Visual properties for simulation
+  voltageGradient?: [number, number];
+  powerDissipation?: number;
+  flowDirection?: number;
+  flowSpeed?: number;
+  // Selection state
   selected?: boolean;
 }
 
@@ -44,6 +63,7 @@ export interface RenderOptions {
   showCurrents: boolean;
   highlightedNodeId?: string | null;
   theme: 'light' | 'dark';
+  animateCurrentFlow?: boolean;
 }
 
 // Updated to include 'wireSegment' for wire manipulation

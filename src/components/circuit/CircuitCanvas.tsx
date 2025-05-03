@@ -47,6 +47,17 @@ export function CircuitCanvas({
     y: 0,
     componentId: null
   });
+  
+  // State for info panel (showing component properties)
+  const [infoPanel, setInfoPanel] = useState<{
+    show: boolean;
+    componentId: string | null;
+    position: { x: number; y: number };
+  }>({
+    show: false,
+    componentId: null,
+    position: { x: 0, y: 0 }
+  });
 
   // Set up wire manipulation with proper integration
   const {
@@ -95,18 +106,20 @@ export function CircuitCanvas({
   const selectComponent = useCallback((componentId: string | null) => {
     setSelectedComponentId(componentId);
     if (componentId) {
-      toast({
-        title: "Component Selected",
-        description: `Component ${componentId.split('_')[0]} selected. Use R to rotate or Delete to remove.`
-      });
+      const component = circuit.components.find(c => c.id === componentId);
+      if (component) {
+        toast({
+          title: "Component Selected",
+          description: `${component.type.charAt(0).toUpperCase() + component.type.slice(1)} selected. Use R to rotate or Delete to remove.`
+        });
+      }
     }
-  }, [toast]);
-  
-  // Rotate the selected component
-  const handleRotateComponent = useCallback((componentId: string) => {
-    // This will be handled by keyboard shortcut through useCircuitKeyboard
-    console.log(`Rotating component: ${componentId}`);
-  }, []);
+    
+    // Hide info panel when deselecting
+    if (!componentId) {
+      setInfoPanel({...infoPanel, show: false});
+    }
+  }, [toast, circuit.components, infoPanel]);
   
   // Handle right-click context menu
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -135,6 +148,30 @@ export function CircuitCanvas({
       setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
     }
   }, [circuit, selectComponent]);
+  
+  // Show info panel with component properties on double click
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    if (!canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const item = findHoveredItem(circuit, x, y);
+    
+    if (item?.type === 'component') {
+      const component = circuit.components.find(c => c.id === item.id);
+      if (component) {
+        setInfoPanel({
+          show: true,
+          componentId: item.id,
+          position: { x: e.clientX, y: e.clientY }
+        });
+      }
+    } else {
+      setInfoPanel({...infoPanel, show: false});
+    }
+  }, [circuit, infoPanel]);
   
   // Handle custom mouse actions for better component interaction
   const handleMouseDownWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -205,7 +242,7 @@ export function CircuitCanvas({
       if (component && pin && item.position) {
         console.log("Starting connection from pin:", pin.id, "on component:", component.id);
         connectionPreview.startConnection({
-          nodeId: pin.nodeId,
+          nodeId: pin.nodeId!,
           pinId: pin.id,
           componentId: component.id,
           position: item.position
@@ -242,7 +279,7 @@ export function CircuitCanvas({
     if (connectionPreview.isConnecting) {
       const targetItem = findHoveredItem(circuit, x, y);
       const targetNodeId = targetItem?.type === 'pin' ? 
-        targetItem.id : 
+        circuit.components.find(c => c.id === targetItem.componentId)?.pins.find(p => p.id === targetItem.pinId)?.nodeId : 
         targetItem?.type === 'node' ? targetItem.id : null;
       
       connectionPreview.updateConnectionEnd({ x, y }, targetNodeId, circuit);
@@ -283,7 +320,7 @@ export function CircuitCanvas({
           console.log("Completing connection to pin:", pin.id, "on component:", component.id);
           onConnectNodes(connectionPreview.connectionStart.nodeId, pin.nodeId);
           
-          // Show a success toast - FIX: Change variant from "success" to "default"
+          // Show a success toast
           toast({
             title: "Connection Created",
             description: "Components connected successfully"
@@ -307,6 +344,8 @@ export function CircuitCanvas({
     hoveredNodeId,
     selectedWireId,
     selectedComponentId,
+    animateCurrentFlow: isRunning,
+    theme: 'light',
     connectionPreview: {
       getPreviewPath: (c: Circuit) => connectionPreview.getPreviewPath(c),
       connectionStart: connectionPreview.connectionStart,
@@ -332,6 +371,36 @@ export function CircuitCanvas({
     return 'default';
   };
   
+  // Get the component for the info panel
+  const getSelectedComponent = () => {
+    if (!infoPanel.show || !infoPanel.componentId) return null;
+    return circuit.components.find(c => c.id === infoPanel.componentId);
+  };
+  
+  // Format properties for display
+  const formatPropValue = (key: string, value: any): string => {
+    if (key === 'current') {
+      const current = Math.abs(value);
+      if (current < 0.001) return `${(current * 1000000).toFixed(2)} µA`;
+      if (current < 1) return `${(current * 1000).toFixed(2)} mA`;
+      return `${current.toFixed(2)} A`;
+    }
+    
+    if (key === 'voltage') return `${value.toFixed(2)} V`;
+    if (key === 'resistance') return `${value.toFixed(0)} Ω`;
+    if (key === 'power') {
+      const power = Math.abs(value);
+      if (power < 0.001) return `${(power * 1000000).toFixed(2)} µW`;
+      if (power < 1) return `${(power * 1000).toFixed(2)} mW`;
+      return `${power.toFixed(2)} W`;
+    }
+    if (key === 'brightness') return `${(value * 100).toFixed(0)}%`;
+    if (key === 'temperature') return `${value.toFixed(1)} °C`;
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    
+    return String(value);
+  };
+  
   return (
     <div className="relative w-full h-full">
       <canvas
@@ -343,6 +412,7 @@ export function CircuitCanvas({
         onMouseUp={handleMouseUpWithInteraction}
         onMouseLeave={handleMouseUpWithInteraction}
         onContextMenu={handleContextMenu}
+        onDoubleClick={handleDoubleClick}
         style={{ cursor: getCursor() }}
       />
       
@@ -386,11 +456,77 @@ export function CircuitCanvas({
           </button>
         </div>
       )}
-
-      {/* Component properties tooltip (for future enhancement) */}
-      {selectedComponentId && hoveredItem?.type === 'component' && (
-        <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
-          <p className="text-sm">{selectedComponentId}</p>
+      
+      {/* Component properties info panel */}
+      {infoPanel.show && getSelectedComponent() && (
+        <div 
+          className="absolute bg-white shadow-lg rounded-md border border-gray-200 p-3 z-50"
+          style={{
+            left: Math.min(infoPanel.position.x, window.innerWidth - 240),
+            top: Math.min(infoPanel.position.y, window.innerHeight - 300),
+            width: '220px'
+          }}
+        >
+          <div className="flex justify-between items-center border-b pb-2 mb-2">
+            <h3 className="font-semibold text-sm capitalize">
+              {getSelectedComponent()?.type} Properties
+            </h3>
+            <button 
+              className="text-gray-500 hover:text-gray-700"
+              onClick={() => setInfoPanel({...infoPanel, show: false})}
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-2 max-h-60 overflow-y-auto text-sm">
+            {getSelectedComponent() && Object.entries(getSelectedComponent()!.properties)
+              .filter(([key]) => !key.includes('_') && typeof key === 'string' && key !== 'id')
+              .map(([key, value]) => (
+                <div key={key} className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-600 capitalize">{key}:</span>
+                  <span className="col-span-2 font-medium">
+                    {formatPropValue(key, value)}
+                  </span>
+                </div>
+              ))}
+            
+            {isRunning && getSelectedComponent() && (
+              <div className="mt-2 pt-2 border-t border-gray-100">
+                <div className="text-xs text-blue-600 font-medium mb-1">Real-time Values</div>
+                {getSelectedComponent()?.type === 'led' && (
+                  <div className={`h-3 rounded-full transition-all duration-200 bg-gradient-to-r from-yellow-200 to-yellow-400`} 
+                    style={{ 
+                      width: `${(getSelectedComponent()?.properties.brightness || 0) * 100}%`, 
+                      opacity: (getSelectedComponent()?.properties.brightness || 0)
+                    }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Voltage overlay */}
+      {showVoltages && isRunning && (
+        <div className="absolute top-2 right-2 bg-white/80 rounded shadow p-2 text-xs font-mono">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span>5V</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span>3.3V</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+            <span>1.7V</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            <span>0V</span>
+          </div>
         </div>
       )}
     </div>

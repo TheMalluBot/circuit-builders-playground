@@ -1,6 +1,15 @@
 
 import React from 'react';
-import { Play, Pause, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Zap, 
+  Droplets,
+  Waves
+} from 'lucide-react';
 
 interface SimulationControlsProps {
   isRunning: boolean;
@@ -24,56 +33,52 @@ export function SimulationControls({
   onToggleCurrents
 }: SimulationControlsProps) {
   return (
-    <div className="flex items-center justify-between gap-4 p-3 bg-gray-100 border-t border-gray-200">
-      <div className="flex gap-2">
-        {!isRunning ? (
-          <button
-            onClick={onStart}
-            className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-            aria-label="Start simulation"
-          >
-            <Play className="h-4 w-4" />
-            <span>Start</span>
-          </button>
-        ) : (
-          <button
-            onClick={onStop}
-            className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-            aria-label="Stop simulation"
-          >
-            <Pause className="h-4 w-4" />
-            <span>Stop</span>
-          </button>
-        )}
-        <button
-          onClick={onReset}
-          className="flex items-center gap-1 px-3 py-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-          aria-label="Reset simulation"
+    <div className="p-2 border-t border-gray-200 bg-white flex justify-between items-center">
+      <div className="flex items-center space-x-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={isRunning ? "bg-amber-50" : ""}
+          onClick={isRunning ? onStop : onStart}
         >
-          <RefreshCw className="h-4 w-4" />
-          <span>Reset</span>
-        </button>
+          {isRunning ? <Pause size={16} className="mr-1" /> : <Play size={16} className="mr-1" />}
+          {isRunning ? 'Pause' : 'Run'}
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={onReset}
+          disabled={isRunning}
+        >
+          <RotateCcw size={16} />
+        </Button>
       </div>
       
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="toggle-voltage" className="text-sm flex items-center">
+            <Zap size={16} className="mr-1 text-blue-500" />
+            Voltage
+          </label>
+          <Switch
+            id="toggle-voltage"
             checked={showVoltages}
-            onChange={onToggleVoltages}
-            className="w-4 h-4"
+            onCheckedChange={onToggleVoltages}
           />
-          <span className="text-sm">Show Voltages</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <label htmlFor="toggle-current" className="text-sm flex items-center">
+            <Waves size={16} className="mr-1 text-orange-500" />
+            Current
+          </label>
+          <Switch
+            id="toggle-current"
             checked={showCurrents}
-            onChange={onToggleCurrents}
-            className="w-4 h-4"
+            onCheckedChange={onToggleCurrents}
           />
-          <span className="text-sm">Show Currents</span>
-        </label>
+        </div>
       </div>
     </div>
   );
