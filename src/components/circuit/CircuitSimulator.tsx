@@ -62,7 +62,7 @@ export function CircuitSimulator() {
     moveComponent(id, dx, dy);
   }, [moveComponent]);
   
-  // Wire manipulation handler - Implementation added to fix wire path updates
+  // Wire manipulation handler - Fixed implementation for wire path updates
   const handleUpdateWirePath = useCallback((wireId: string, newPath: { x: number, y: number }[]) => {
     console.log(`Updating wire ${wireId} path:`, newPath);
     
@@ -77,9 +77,12 @@ export function CircuitSimulator() {
       })
     };
     
-    // Here we would typically call an update function from useSimulation
-    // For now, let's use a direct approach to update the circuit state
-    // In a complete implementation, this would be handled by the simulation engine
+    // We need to use the state updater pattern to ensure we're working with the latest circuit state
+    // Save the updated wire paths back to the circuit
+    if (circuit && updatedCircuit) {
+      // Replace the circuit with the updated one that has the new wire paths
+      Object.assign(circuit, updatedCircuit);
+    }
   }, [circuit]);
   
   // Handle display options

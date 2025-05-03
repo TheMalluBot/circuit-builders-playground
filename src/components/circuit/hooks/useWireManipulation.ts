@@ -55,10 +55,19 @@ export function useWireManipulation(
     
     console.log(`Updating wire ${draggedWire.wireId} path:`, newPath);
     
-    // If dragging first or last point, adjust it to stay connected to node
+    // If dragging first or last point, handle attachment to nodes
     if (draggedWire.pointIndex === 0 || draggedWire.pointIndex === newPath.length - 1) {
-      // Keep the point's original position for endpoints connected to nodes
-      // This implementation allows you to move endpoints if you later decide to enable it
+      // Find attached node positions to maintain connections
+      const nodeIndex = draggedWire.pointIndex === 0 ? 0 : 1;
+      const nodeId = wire.nodeIds[nodeIndex];
+      
+      // Find the node position from the circuit
+      const node = circuit.nodes.find(n => n.id === nodeId);
+      
+      // If node exists, keep the endpoint attached to the node
+      if (node) {
+        newPath[draggedWire.pointIndex] = { ...node.position };
+      }
     }
     
     // Update the wire path

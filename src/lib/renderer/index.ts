@@ -5,10 +5,14 @@ import { renderWires } from './wireRenderer';
 import { renderComponents } from './componentRenderer';
 import { renderNodes } from './nodeRenderer';
 
+export interface CircuitRenderOptions extends RenderOptions {
+  selectedWireId?: string | null;
+}
+
 export function renderCircuit(
   ctx: CanvasRenderingContext2D, 
   circuit: Circuit, 
-  options: RenderOptions & { selectedWireId?: string | null }
+  options: CircuitRenderOptions
 ): void {
   // Clear canvas
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

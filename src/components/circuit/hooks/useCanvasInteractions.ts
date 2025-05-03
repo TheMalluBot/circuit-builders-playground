@@ -5,20 +5,22 @@ import { findHoveredItem } from '../utils/ItemFinder';
 import { getMousePosition } from '../utils/CanvasUtils';
 import { useConnectionPreview } from './useConnectionPreview';
 
+interface CanvasInteractionOptions {
+  selectedComponent: ComponentType | null;
+  onAddComponent: (type: ComponentType, x: number, y: number) => void;
+  onConnectNodes: (sourceId: string, targetId: string) => void;
+  onToggleSwitch: (componentId: string) => void;
+  selectedWireId?: string | null;
+  selectWire?: (wireId: string | null) => void;
+}
+
 /**
  * Hook to handle canvas interactions with improved wire connection experience
  */
 export function useCanvasInteractions(
   canvasRef: RefObject<HTMLCanvasElement>,
   circuit: Circuit,
-  options: {
-    selectedComponent: ComponentType | null;
-    onAddComponent: (type: ComponentType, x: number, y: number) => void;
-    onConnectNodes: (sourceId: string, targetId: string) => void;
-    onToggleSwitch: (componentId: string) => void;
-    selectedWireId?: string | null;
-    selectWire?: (wireId: string | null) => void;
-  }
+  options: CanvasInteractionOptions
 ) {
   // Interaction state
   const [isDragging, setIsDragging] = useState(false);
@@ -145,6 +147,9 @@ export function useCanvasInteractions(
         setIsDragging(true);
         setDraggedItem(item);
         setDragStartPos({ x, y });
+        if (item.type === 'wire' && options.selectWire) {
+          options.selectWire(item.id);
+        }
         e.preventDefault(); // Prevent text selection during drag
       } else if (item.type === 'pin' && item.position) {
         // Start wire connection immediately on mouse down
@@ -165,7 +170,7 @@ export function useCanvasInteractions(
         }
       }
     }
-  }, [canvasRef, circuit, connectionPreview]);
+  }, [canvasRef, circuit, connectionPreview, options]);
   
   // Handle mouse move for dragging and wire connections
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

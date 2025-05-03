@@ -32,7 +32,7 @@ export function CircuitCanvas({
 }: CircuitCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Set up wire manipulation - fixed integration with other hooks
+  // Set up wire manipulation with proper integration
   const {
     draggedWire,
     selectedWireId,
@@ -87,13 +87,14 @@ export function CircuitCanvas({
     // Check if clicking on a wire control point
     const item = findHoveredItem(circuit, x, y);
     
-    if (item?.type === 'wireControlPoint' && item.wireId && item.pointIndex !== undefined) {
-      startDragControlPoint(item.wireId, item.pointIndex, { x, y });
+    if (item?.type === 'wireControlPoint' && item.wireId && item.pointIndex !== undefined && item.position) {
+      startDragControlPoint(item.wireId, item.pointIndex, item.position);
       e.preventDefault(); // Prevent default to ensure drag works properly
       return;
     }
     
-    if (item?.type === 'wireSegment' && item.wireId && item.segmentIndex !== undefined) {
+    if (item?.type === 'wireSegment' && item.wireId && item.segmentIndex !== undefined && 
+        item.start && item.end) {
       // Get midpoint of segment to add a new control point
       const midX = (item.start.x + item.end.x) / 2;
       const midY = (item.start.y + item.end.y) / 2;

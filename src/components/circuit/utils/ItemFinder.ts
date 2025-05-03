@@ -103,8 +103,23 @@ export function findHoveredItem(
   // Check for component pins
   for (const component of circuit.components) {
     for (const pin of component.pins) {
-      const pinX = component.position.x + pin.position.x;
-      const pinY = component.position.y + pin.position.y;
+      // Calculate actual pin position based on component position and rotation
+      let pinX = component.position.x + pin.position.x;
+      let pinY = component.position.y + pin.position.y;
+      
+      // Apply rotation if component is rotated
+      if (component.rotation) {
+        const radians = (component.rotation * Math.PI) / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        
+        // Rotate around component center
+        const rotatedX = pin.position.x * cos - pin.position.y * sin;
+        const rotatedY = pin.position.x * sin + pin.position.y * cos;
+        
+        pinX = component.position.x + rotatedX;
+        pinY = component.position.y + rotatedY;
+      }
       
       const distance = Math.sqrt(Math.pow(x - pinX, 2) + Math.pow(y - pinY, 2));
       
