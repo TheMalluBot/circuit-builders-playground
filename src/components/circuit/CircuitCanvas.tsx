@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useCallback } from 'react';
 import { Circuit, ComponentType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
@@ -60,7 +61,7 @@ export function CircuitCanvas({
     selectedWireId,
     selectWire
   });
-  
+
   // Handle canvas resizing
   useEffect(() => {
     const canvas = canvasRef.current;
