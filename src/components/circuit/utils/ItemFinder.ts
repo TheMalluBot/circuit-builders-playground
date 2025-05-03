@@ -24,7 +24,42 @@ export function findHoveredItem(
   y: number,
   threshold: number = 10
 ): HoveredItem | null {
-  // First check for wire control points (highest priority)
+  // First check for pins (highest priority for connections)
+  for (const component of circuit.components) {
+    for (const pin of component.pins) {
+      // Calculate actual pin position based on component position and rotation
+      let pinX = component.position.x + pin.position.x;
+      let pinY = component.position.y + pin.position.y;
+      
+      // Apply rotation if component is rotated
+      if (component.rotation) {
+        const radians = (component.rotation * Math.PI) / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        
+        // Rotate around component center
+        const rotatedX = pin.position.x * cos - pin.position.y * sin;
+        const rotatedY = pin.position.x * sin + pin.position.y * cos;
+        
+        pinX = component.position.x + rotatedX;
+        pinY = component.position.y + rotatedY;
+      }
+      
+      const distance = Math.sqrt(Math.pow(x - pinX, 2) + Math.pow(y - pinY, 2));
+      
+      if (distance <= threshold) {
+        return {
+          type: 'pin',
+          id: pin.nodeId || '',
+          pinId: pin.id,
+          componentId: component.id,
+          position: { x: pinX, y: pinY }
+        };
+      }
+    }
+  }
+  
+  // Second priority: check for wire control points
   for (const wire of circuit.wires) {
     if (!wire.path || wire.path.length <= 1) continue;
     
@@ -65,7 +100,7 @@ export function findHoveredItem(
     }
   }
 
-  // If no specific part is hovered, check if entire wire is hovered
+  // Third priority: check for whole wires
   for (const wire of circuit.wires) {
     if (!wire.path || wire.path.length <= 1) continue;
     
@@ -97,42 +132,7 @@ export function findHoveredItem(
     }
   }
 
-  // Check for component pins
-  for (const component of circuit.components) {
-    for (const pin of component.pins) {
-      // Calculate actual pin position based on component position and rotation
-      let pinX = component.position.x + pin.position.x;
-      let pinY = component.position.y + pin.position.y;
-      
-      // Apply rotation if component is rotated
-      if (component.rotation) {
-        const radians = (component.rotation * Math.PI) / 180;
-        const cos = Math.cos(radians);
-        const sin = Math.sin(radians);
-        
-        // Rotate around component center
-        const rotatedX = pin.position.x * cos - pin.position.y * sin;
-        const rotatedY = pin.position.x * sin + pin.position.y * cos;
-        
-        pinX = component.position.x + rotatedX;
-        pinY = component.position.y + rotatedY;
-      }
-      
-      const distance = Math.sqrt(Math.pow(x - pinX, 2) + Math.pow(y - pinY, 2));
-      
-      if (distance <= threshold) {
-        return {
-          type: 'pin',
-          id: pin.nodeId || '',
-          pinId: pin.id,
-          componentId: component.id,
-          position: { x: pinX, y: pinY }
-        };
-      }
-    }
-  }
-
-  // Check for components
+  // Finally check for components
   for (const component of circuit.components) {
     // Simple check with fixed radius - could be enhanced for component shape
     const distance = Math.sqrt(Math.pow(x - component.position.x, 2) + Math.pow(y - component.position.y, 2));

@@ -62,6 +62,19 @@ export function CircuitSimulator() {
     moveComponent(id, dx, dy);
   }, [moveComponent]);
   
+  // Handle node connection with improved debugging
+  const handleConnectNodes = useCallback((sourceId: string, targetId: string) => {
+    console.log(`Connecting nodes ${sourceId} and ${targetId}`);
+    
+    // Ensure both nodes exist and are different
+    if (sourceId && targetId && sourceId !== targetId) {
+      console.log("Creating connection between nodes");
+      connectNodes(sourceId, targetId);
+    } else {
+      console.log("Invalid connection attempt:", { sourceId, targetId });
+    }
+  }, [connectNodes]);
+  
   // Wire manipulation handler for wire path updates
   const handleUpdateWirePath = useCallback((wireId: string, newPath: { x: number, y: number }[]) => {
     console.log(`Updating wire ${wireId} path:`, newPath);
@@ -107,7 +120,7 @@ export function CircuitSimulator() {
           circuit={circuit}
           selectedComponent={selectedComponent}
           onAddComponent={handleAddComponent}
-          onConnectNodes={connectNodes}
+          onConnectNodes={handleConnectNodes}
           onToggleSwitch={toggleSwitch}
           onUpdateWirePath={handleUpdateWirePath}
           showVoltages={showVoltages}

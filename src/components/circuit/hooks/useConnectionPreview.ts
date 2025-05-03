@@ -31,6 +31,7 @@ export function useConnectionPreview() {
     componentId: string;
     position: { x: number; y: number };
   }) => {
+    console.log("Connection started from:", data);
     setConnectionStart(data);
   }, []);
   
@@ -53,13 +54,13 @@ export function useConnectionPreview() {
       );
       
       // Find the closest pin within snapping distance
-      let closestDistance = 15; // Snap threshold
+      let closestDistance = 20; // Increased snap threshold
       let closestPin: { position: { x: number; y: number }; nodeId: string | null } | null = null;
       
       for (const comp of componentsToCheck) {
         for (const pin of comp.pins) {
           // Calculate actual pin position
-          const radians = (comp.rotation * Math.PI) / 180;
+          const radians = (comp.rotation || 0) * Math.PI / 180;
           const cos = Math.cos(radians);
           const sin = Math.sin(radians);
           
@@ -82,6 +83,7 @@ export function useConnectionPreview() {
               position: pinPos,
               nodeId: pin.nodeId || `${comp.id}-${pin.id}`
             };
+            console.log("Found snappable pin:", closestPin.nodeId, "distance:", distance);
           }
         }
       }
@@ -103,6 +105,7 @@ export function useConnectionPreview() {
   
   // Reset connection state
   const resetConnection = useCallback(() => {
+    console.log("Connection reset");
     setConnectionStart(null);
     setHoveredNodeId(null);
     setMagneticSnap({ active: false, position: { x: 0, y: 0 } });
