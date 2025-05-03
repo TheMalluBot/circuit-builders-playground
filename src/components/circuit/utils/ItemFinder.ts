@@ -58,8 +58,19 @@ export function findHoveredItem(
       }
     }
   }
+
+  // Check for components (more accurate hit detection)
+  for (const component of circuit.components) {
+    // More accurate component hit detection based on component type and size
+    if (isInsideComponent(x, y, component)) {
+      return {
+        type: 'component',
+        id: component.id
+      };
+    }
+  }
   
-  // Second priority: check for wire control points
+  // Check for wire control points
   for (const wire of circuit.wires) {
     if (!wire.path || wire.path.length <= 1) continue;
     
@@ -100,7 +111,7 @@ export function findHoveredItem(
     }
   }
 
-  // Third priority: check for whole wires
+  // Check for whole wires
   for (const wire of circuit.wires) {
     if (!wire.path || wire.path.length <= 1) continue;
     
@@ -128,19 +139,6 @@ export function findHoveredItem(
         type: 'node',
         id: node.id,
         position: node.position
-      };
-    }
-  }
-
-  // Finally check for components
-  for (const component of circuit.components) {
-    // Simple check with fixed radius - could be enhanced for component shape
-    const distance = Math.sqrt(Math.pow(x - component.position.x, 2) + Math.pow(y - component.position.y, 2));
-    
-    if (distance <= 30) {
-      return {
-        type: 'component',
-        id: component.id
       };
     }
   }
@@ -186,4 +184,67 @@ function distanceToLineSegment(
   const dy = py - yy;
   
   return Math.sqrt(dx * dx + dy * dy);
+}
+
+/**
+ * Check if a point is inside a component based on its type and dimensions
+ */
+function isInsideComponent(x: number, y: number, component: any): boolean {
+  // Default bounding box size
+  let width = 60;
+  let height = 60;
+  
+  // Adjust size based on component type
+  switch (component.type) {
+    case 'battery':
+      width = 60;
+      height = 80;
+      break;
+    case 'resistor':
+      width = 80;
+      height = 40;
+      break;
+    case 'led':
+      width = 60;
+      height = 60;
+      break;
+    case 'switch':
+      width = 80;
+      height = 40;
+      break;
+    default:
+      width = 60;
+      height = 60;
+  }
+  
+  // Apply rotation if needed
+  if (component.rotation) {
+    const radians = (component.rotation * Math.PI) / 180;
+    
+    // Translate point to origin of component
+    const dx = x - component.position.x;
+    const dy = y - component.position.y;
+    
+    // Rotate point
+    const cos = Math.cos(-radians);
+    const sin = Math.sin(-radians);
+    const rotX = dx * cos - dy * sin;
+    const rotY = dx * sin + dy * cos;
+    
+    // Check if point is inside rotated box
+    return (
+      rotX >= -width / 2 &&
+      rotX <= width / 2 &&
+      rotY >= -height / 2 &&
+      rotY <= height / 2
+    );
+  } else {
+    // No rotation - simple box check
+    return (
+      x >= component.position.x - width / 2 &&
+      x <= component.position.x + width / 2 &&
+      y >= component.position.y - height / 2 &&
+      y <= component.position.y + height / 2
+    );
+  }
 }

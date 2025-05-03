@@ -1,11 +1,12 @@
 
-import React, { useRef, useEffect, useCallback } from 'react';
-import { Circuit, ComponentType } from '@/types/circuit';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
 import { useCanvasDrawing } from './hooks/useCanvasDrawing';
 import { useWireManipulation } from './hooks/useWireManipulation';
 import { resizeCanvas } from './utils/CanvasUtils';
 import { findHoveredItem } from './utils/ItemFinder';
+import { useToast } from '@/hooks/use-toast';
 
 interface CircuitCanvasProps {
   circuit: Circuit;
@@ -31,6 +32,21 @@ export function CircuitCanvas({
   isRunning
 }: CircuitCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { toast } = useToast();
+  
+  // Track selected component for visual indication
+  const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+  const [rightClickMenu, setRightClickMenu] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    componentId: string | null;
+  }>({
+    show: false,
+    x: 0,
+    y: 0,
+    componentId: null
+  });
 
   // Set up wire manipulation with proper integration
   const {
@@ -75,8 +91,59 @@ export function CircuitCanvas({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Custom mouse handlers for wire manipulation
-  const handleMouseDownWithWireManipulation = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Component selection handler
+  const selectComponent = useCallback((componentId: string | null) => {
+    setSelectedComponentId(componentId);
+    if (componentId) {
+      toast({
+        title: "Component Selected",
+        description: `Component ${componentId.split('_')[0]} selected. Use R to rotate or Delete to remove.`
+      });
+    }
+  }, [toast]);
+  
+  // Rotate the selected component
+  const handleRotateComponent = useCallback((componentId: string) => {
+    // This will be handled by keyboard shortcut through useCircuitKeyboard
+    console.log(`Rotating component: ${componentId}`);
+  }, []);
+  
+  // Handle right-click context menu
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const item = findHoveredItem(circuit, x, y);
+    
+    if (item?.type === 'component') {
+      setRightClickMenu({
+        show: true,
+        x: e.clientX,
+        y: e.clientY,
+        componentId: item.id
+      });
+      
+      // Also select the component
+      selectComponent(item.id);
+    } else {
+      // Hide menu if clicked elsewhere
+      setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
+    }
+  }, [circuit, selectComponent]);
+  
+  // Handle custom mouse actions for better component interaction
+  const handleMouseDownWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    // Hide context menu when clicking anywhere
+    setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
+    
+    // Right-click is handled separately
+    if (e.button === 2) return;
+    
     if (connectionPreview.isConnecting) return; // Don't handle if already connecting
     
     const canvas = canvasRef.current;
@@ -86,18 +153,34 @@ export function CircuitCanvas({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Check if clicking on a wire control point or segment
+    // Check what was clicked
     const item = findHoveredItem(circuit, x, y);
     
+    if (item?.type === 'component') {
+      // Select the component
+      selectComponent(item.id);
+      
+      // Special handling for switches during simulation
+      if (isRunning && item.id.includes('switch')) {
+        onToggleSwitch(item.id);
+        e.preventDefault();
+        return;
+      }
+    } else if (!item) {
+      // Clicked empty space, deselect
+      selectComponent(null);
+    }
+    
+    // Wire interaction handling
     if (item?.type === 'wireControlPoint' && item.wireId && item.pointIndex !== undefined && item.position) {
       startDragControlPoint(item.wireId, item.pointIndex, item.position);
-      e.preventDefault(); // Prevent default to ensure drag works properly
+      e.preventDefault();
       return;
     }
     
     if (item?.type === 'wireSegment' && item.wireId && item.segmentIndex !== undefined && 
         item.start && item.end) {
-      // Get midpoint of segment to add a new control point
+      // Add a new control point
       const midX = (item.start.x + item.end.x) / 2;
       const midY = (item.start.y + item.end.y) / 2;
       
@@ -111,13 +194,11 @@ export function CircuitCanvas({
       e.preventDefault();
       return;
     } else if (!item || (item.type !== 'wireControlPoint' && item.type !== 'wireSegment')) {
-      // Clicking empty space or non-wire item, deselect wire
       selectWire(null);
     }
     
-    // Most importantly, handle pin clicks for connections
+    // Pin interaction for connections
     if (item?.type === 'pin' && item.position) {
-      // Start connection from this pin
       const component = circuit.components.find(c => c.id === item.componentId);
       const pin = component?.pins.find(p => p.id === item.pinId);
       
@@ -139,9 +220,10 @@ export function CircuitCanvas({
     
     // Fall back to regular mouse handler for other interactions
     handleMouseDown(e);
-  }, [handleMouseDown, circuit, startDragControlPoint, addControlPoint, selectWire, connectionPreview]);
+  }, [handleMouseDown, circuit, startDragControlPoint, addControlPoint, selectWire, 
+      connectionPreview, isRunning, onToggleSwitch, selectComponent]);
   
-  const handleMouseMoveWithWireManipulation = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseMoveWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -172,7 +254,7 @@ export function CircuitCanvas({
     handleMouseMove(e);
   }, [handleMouseMove, draggedWire, dragControlPoint, circuit, connectionPreview]);
   
-  const handleMouseUpWithWireManipulation = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseUpWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -200,6 +282,13 @@ export function CircuitCanvas({
             connectionPreview.connectionStart.componentId !== component.id) {
           console.log("Completing connection to pin:", pin.id, "on component:", component.id);
           onConnectNodes(connectionPreview.connectionStart.nodeId, pin.nodeId);
+          
+          // Show a success toast
+          toast({
+            title: "Connection Created",
+            description: "Components connected successfully",
+            variant: "success"
+          });
         }
       }
       
@@ -210,7 +299,7 @@ export function CircuitCanvas({
     
     // Fall back to regular mouse handler for other interactions
     handleMouseUp(e);
-  }, [handleMouseUp, draggedWire, endDragControlPoint, connectionPreview, circuit, onConnectNodes]);
+  }, [handleMouseUp, draggedWire, endDragControlPoint, connectionPreview, circuit, onConnectNodes, toast]);
   
   // Set up canvas drawing with enhanced wire preview and wire selection
   useCanvasDrawing(canvasRef, circuit, {
@@ -218,6 +307,7 @@ export function CircuitCanvas({
     showCurrents,
     hoveredNodeId,
     selectedWireId,
+    selectedComponentId,
     connectionPreview: {
       getPreviewPath: (c: Circuit) => connectionPreview.getPreviewPath(c),
       connectionStart: connectionPreview.connectionStart,
@@ -232,6 +322,8 @@ export function CircuitCanvas({
     if (hoveredItem?.type === 'wireControlPoint') return 'pointer';
     if (hoveredItem?.type === 'wireSegment') return 'pointer';
     if (hoveredItem?.type === 'pin') return 'crosshair';
+    if (hoveredItem?.type === 'component' && isRunning && hoveredItem.id.includes('switch')) return 'pointer';
+    if (hoveredItem?.type === 'component') return 'move';
     if (selectedComponent) return 'crosshair';
     if (connectionPreview.isConnecting) return 'crosshair';
     if (isDragging) return 'grabbing';
@@ -239,15 +331,66 @@ export function CircuitCanvas({
   };
   
   return (
-    <canvas
-      ref={canvasRef}
-      className="w-full h-full"
-      onClick={handleCanvasClick}
-      onMouseDown={handleMouseDownWithWireManipulation}
-      onMouseMove={handleMouseMoveWithWireManipulation}
-      onMouseUp={handleMouseUpWithWireManipulation}
-      onMouseLeave={handleMouseUpWithWireManipulation}
-      style={{ cursor: getCursor() }}
-    />
+    <div className="relative w-full h-full">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+        onClick={handleCanvasClick}
+        onMouseDown={handleMouseDownWithInteraction}
+        onMouseMove={handleMouseMoveWithInteraction}
+        onMouseUp={handleMouseUpWithInteraction}
+        onMouseLeave={handleMouseUpWithInteraction}
+        onContextMenu={handleContextMenu}
+        style={{ cursor: getCursor() }}
+      />
+      
+      {/* Right-click context menu */}
+      {rightClickMenu.show && (
+        <div 
+          className="absolute bg-white shadow-lg rounded border border-gray-200 py-1 z-50"
+          style={{
+            left: rightClickMenu.x, 
+            top: rightClickMenu.y
+          }}
+        >
+          <button 
+            className="w-full text-left px-4 py-2 hover:bg-gray-100"
+            onClick={() => {
+              if (rightClickMenu.componentId) {
+                toast({
+                  title: "Component Rotated",
+                  description: "Component rotated 90 degrees clockwise",
+                });
+                
+                // This should trigger the rotation action
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));
+              }
+              setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
+            }}
+          >
+            Rotate
+          </button>
+          <button 
+            className="w-full text-left px-4 py-2 hover:bg-gray-100"
+            onClick={() => {
+              if (rightClickMenu.componentId) {
+                // This should trigger the delete action
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' }));
+              }
+              setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      {/* Component properties tooltip (for future enhancement) */}
+      {selectedComponentId && hoveredItem?.type === 'component' && (
+        <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow">
+          <p className="text-sm">{selectedComponentId}</p>
+        </div>
+      )}
+    </div>
   );
 }
