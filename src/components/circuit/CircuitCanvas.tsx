@@ -1,5 +1,5 @@
 
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
 import { useCanvasDrawing } from './hooks/useCanvasDrawing';
