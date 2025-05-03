@@ -63,7 +63,7 @@ export interface RenderOptions {
   showCurrents: boolean;
   highlightedNodeId?: string | null;
   theme: 'light' | 'dark';
-  animateCurrentFlow?: boolean;
+  animateCurrentFlow?: boolean; // Added this property
   selectedComponentId?: string | null;
   selectedWireId?: string | null;
 }

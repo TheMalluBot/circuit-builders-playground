@@ -15,6 +15,8 @@ export function useCanvasDrawing(
     hoveredNodeId?: string;
     selectedWireId?: string;
     selectedComponentId?: string;
+    animateCurrentFlow?: boolean; // Add this property
+    theme?: 'light' | 'dark';
     connectionPreview?: {
       getPreviewPath: (circuit: Circuit) => { path: { x: number; y: number }[]; isValidTarget: boolean; endPos: { x: number; y: number } };
       connectionStart?: { nodeId: string; componentId: string; position: { x: number; y: number } };
@@ -41,7 +43,9 @@ export function useCanvasDrawing(
         highlightedNodeId: options.hoveredNodeId,
         selectedWireId: options.selectedWireId,
         selectedComponentId: options.selectedComponentId,
-        theme: 'light',
+        animateCurrentFlow: options.animateCurrentFlow, // Pass this property
+        theme: options.theme || 'light',
+        connectionPreview: options.connectionPreview
       });
       
       // Draw connection preview if active

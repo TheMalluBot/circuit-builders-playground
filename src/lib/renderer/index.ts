@@ -1,4 +1,3 @@
-
 import { Circuit, RenderOptions } from '@/types/circuit';
 import { renderGrid } from './gridRenderer';
 import { renderWires } from './wireRenderer';
@@ -8,7 +7,6 @@ import { renderNodes } from './nodeRenderer';
 export interface CircuitRenderOptions extends RenderOptions {
   selectedWireId?: string | null;
   selectedComponentId?: string | null;
-  animateCurrentFlow?: boolean;
   connectionPreview?: {
     getPreviewPath: (circuit: Circuit) => { path: { x: number; y: number; }[]; isValidTarget: boolean; endPos: { x: number; y: number; } };
     connectionStart: { nodeId: string; pinId: string; componentId: string; position: { x: number; y: number; } } | null;
