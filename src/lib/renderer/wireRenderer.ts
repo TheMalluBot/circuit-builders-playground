@@ -1,3 +1,4 @@
+
 import { Wire, Node, Circuit, RenderOptions } from '@/types/circuit';
 import { calculateWirePath } from '../interaction';
 
@@ -101,7 +102,7 @@ function drawWire(
  * Draws control points on a wire for manipulation
  */
 function drawWireControlPoints(ctx: CanvasRenderingContext2D, path: {x: number, y: number}[]): void {
-  const pointRadius = 4;
+  const pointRadius = 5; // Increased size for better visibility
   
   // Draw control points at each vertex in the path
   ctx.fillStyle = '#ff6600'; // Orange control points

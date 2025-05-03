@@ -32,7 +32,7 @@ export function CircuitCanvas({
 }: CircuitCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Set up wire manipulation
+  // Set up wire manipulation - fixed integration with other hooks
   const {
     draggedWire,
     selectedWireId,
@@ -61,7 +61,7 @@ export function CircuitCanvas({
     selectedWireId,
     selectWire
   });
-
+  
   // Handle canvas resizing
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -89,6 +89,7 @@ export function CircuitCanvas({
     
     if (item?.type === 'wireControlPoint' && item.wireId && item.pointIndex !== undefined) {
       startDragControlPoint(item.wireId, item.pointIndex, { x, y });
+      e.preventDefault(); // Prevent default to ensure drag works properly
       return;
     }
     
@@ -98,11 +99,13 @@ export function CircuitCanvas({
       const midY = (item.start.y + item.end.y) / 2;
       
       addControlPoint(item.wireId, item.segmentIndex, { x: midX, y: midY }, circuit);
+      e.preventDefault();
       return;
     }
     
     if (item?.type === 'wire') {
       selectWire(item.id);
+      e.preventDefault();
       return;
     } else if (!item) {
       // Clicking empty space, deselect wire
@@ -124,6 +127,7 @@ export function CircuitCanvas({
     // Check if we're dragging a wire control point
     if (draggedWire) {
       dragControlPoint({ x, y }, circuit);
+      e.preventDefault();
       return;
     }
     
@@ -135,6 +139,7 @@ export function CircuitCanvas({
     // End wire control point dragging if active
     if (draggedWire) {
       endDragControlPoint();
+      e.preventDefault();
       return;
     }
     

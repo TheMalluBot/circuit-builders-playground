@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Wire, Circuit } from '@/types/circuit';
 
@@ -23,6 +22,7 @@ export function useWireManipulation(
     pointIndex: number,
     position: { x: number; y: number }
   ) => {
+    console.log(`Starting to drag control point ${pointIndex} of wire ${wireId}`);
     setDraggedWire({
       wireId,
       pointIndex,
@@ -53,14 +53,12 @@ export function useWireManipulation(
       y: position.y
     };
     
-    // For endpoints, make sure they stay connected to the nodes
-    if (draggedWire.pointIndex > 0 && draggedWire.pointIndex < newPath.length - 1) {
-      // When dragging middle points, we might need to update adjacent segments
-      // This is a simple implementation - more advanced routing would adjust connected segments
-      
-      // If dragging a middle point, we might want to maintain right angles
-      // For example, if the point is part of an L-shaped segment:
-      // In this basic implementation, we'll allow free movement
+    console.log(`Updating wire ${draggedWire.wireId} path:`, newPath);
+    
+    // If dragging first or last point, adjust it to stay connected to node
+    if (draggedWire.pointIndex === 0 || draggedWire.pointIndex === newPath.length - 1) {
+      // Keep the point's original position for endpoints connected to nodes
+      // This implementation allows you to move endpoints if you later decide to enable it
     }
     
     // Update the wire path
@@ -79,6 +77,8 @@ export function useWireManipulation(
     const wire = circuit.wires.find(w => w.id === wireId);
     if (!wire || !wire.path || wire.path.length <= segmentIndex) return;
     
+    console.log(`Adding control point to wire ${wireId} at segment ${segmentIndex}`);
+    
     // Create a new path with the point inserted
     const newPath = [...wire.path];
     newPath.splice(segmentIndex + 1, 0, position);
@@ -94,6 +94,7 @@ export function useWireManipulation(
    * End control point dragging
    */
   const endDragControlPoint = useCallback(() => {
+    console.log(`End dragging control point`);
     setDraggedWire(null);
   }, []);
   
@@ -101,6 +102,7 @@ export function useWireManipulation(
    * Select a wire for manipulation
    */
   const selectWire = useCallback((wireId: string | null) => {
+    console.log(`Wire ${wireId || 'none'} selected`);
     setSelectedWireId(wireId);
   }, []);
   

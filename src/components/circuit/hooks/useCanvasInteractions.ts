@@ -1,3 +1,4 @@
+
 import { useState, useCallback, RefObject } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { findHoveredItem } from '../utils/ItemFinder';
@@ -15,8 +16,8 @@ export function useCanvasInteractions(
     onAddComponent: (type: ComponentType, x: number, y: number) => void;
     onConnectNodes: (sourceId: string, targetId: string) => void;
     onToggleSwitch: (componentId: string) => void;
-    selectedWireId?: string | null; // Added this property to the options
-    selectWire?: (wireId: string | null) => void; // Added this optional method
+    selectedWireId?: string | null;
+    selectWire?: (wireId: string | null) => void;
   }
 ) {
   // Interaction state
@@ -31,6 +32,11 @@ export function useCanvasInteractions(
     pinId?: string;
     componentId?: string;
     position?: { x: number; y: number };
+    wireId?: string;
+    segmentIndex?: number;
+    pointIndex?: number;
+    start?: { x: number; y: number };
+    end?: { x: number; y: number };
   } | null>(null);
   
   // Connection state with enhanced preview
@@ -52,6 +58,12 @@ export function useCanvasInteractions(
       // Handle wire selection
       if (item.type === 'wire' && options.selectWire) {
         options.selectWire(item.id);
+        return;
+      }
+      
+      // Handle wire segment or control point clicks - these are handled by useWireManipulation
+      if ((item.type === 'wireSegment' || item.type === 'wireControlPoint') && options.selectWire) {
+        // These clicks will be handled by the wire manipulation hooks
         return;
       }
       
@@ -184,14 +196,12 @@ export function useCanvasInteractions(
       const dy = y - dragStartPos.y;
       
       if (draggedItem.type === 'component') {
-        // TODO: Implement component dragging via a moveComponent function
-        // moveComponent(draggedItem.id, dx, dy);
-      } else if (draggedItem.type === 'wire') {
-        // TODO: Implement wire segment dragging
-        // updateWirePath(draggedItem.id, draggedItem.segmentIndex, dx, dy);
+        // Implement component dragging
+        // This functionality would typically be provided by your circuit simulation engine
+        // For now, we'll leave this as a placeholder
+        
+        setDragStartPos({ x, y });
       }
-      
-      setDragStartPos({ x, y });
     }
   }, [canvasRef, circuit, isDragging, draggedItem, dragStartPos, connectionPreview]);
   
