@@ -1,12 +1,16 @@
 
-import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
+import React, { useRef, useState } from 'react';
+import { Circuit, ComponentType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
 import { useCanvasDrawing } from './hooks/useCanvasDrawing';
 import { useWireManipulation } from './hooks/useWireManipulation';
 import { resizeCanvas } from './utils/CanvasUtils';
 import { findHoveredItem } from './utils/ItemFinder';
 import { useToast } from '@/hooks/use-toast';
+import { InfoPanel } from './canvas/InfoPanel';
+import { ContextMenu } from './canvas/ContextMenu';
+import { VoltageOverlay } from './canvas/VoltageOverlay';
+import { CanvasEvents } from './canvas/CanvasEvents';
 
 interface CircuitCanvasProps {
   circuit: Circuit;
@@ -90,7 +94,7 @@ export function CircuitCanvas({
   });
   
   // Handle canvas resizing
-  useEffect(() => {
+  React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -103,7 +107,7 @@ export function CircuitCanvas({
   }, []);
   
   // Component selection handler
-  const selectComponent = useCallback((componentId: string | null) => {
+  const selectComponent = React.useCallback((componentId: string | null) => {
     setSelectedComponentId(componentId);
     if (componentId) {
       const component = circuit.components.find(c => c.id === componentId);
@@ -122,7 +126,7 @@ export function CircuitCanvas({
   }, [toast, circuit.components, infoPanel]);
   
   // Handle right-click context menu
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+  const handleContextMenu = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     
     if (!canvasRef.current) return;
@@ -150,7 +154,7 @@ export function CircuitCanvas({
   }, [circuit, selectComponent]);
   
   // Show info panel with component properties on double click
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+  const handleDoubleClick = React.useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
@@ -172,170 +176,32 @@ export function CircuitCanvas({
       setInfoPanel({...infoPanel, show: false});
     }
   }, [circuit, infoPanel]);
-  
-  // Handle custom mouse actions for better component interaction
-  const handleMouseDownWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    // Hide context menu when clicking anywhere
-    setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
-    
-    // Right-click is handled separately
-    if (e.button === 2) return;
-    
-    if (connectionPreview.isConnecting) return; // Don't handle if already connecting
-    
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Check what was clicked
-    const item = findHoveredItem(circuit, x, y);
-    
-    if (item?.type === 'component') {
-      // Select the component
-      selectComponent(item.id);
-      
-      // Special handling for switches during simulation
-      if (isRunning && item.id.includes('switch')) {
-        onToggleSwitch(item.id);
-        e.preventDefault();
-        return;
-      }
-    } else if (!item) {
-      // Clicked empty space, deselect
-      selectComponent(null);
-    }
-    
-    // Wire interaction handling
-    if (item?.type === 'wireControlPoint' && item.wireId && item.pointIndex !== undefined && item.position) {
-      startDragControlPoint(item.wireId, item.pointIndex, item.position);
-      e.preventDefault();
-      return;
-    }
-    
-    if (item?.type === 'wireSegment' && item.wireId && item.segmentIndex !== undefined && 
-        item.start && item.end) {
-      // Add a new control point
-      const midX = (item.start.x + item.end.x) / 2;
-      const midY = (item.start.y + item.end.y) / 2;
-      
-      addControlPoint(item.wireId, item.segmentIndex, { x: midX, y: midY }, circuit);
-      e.preventDefault();
-      return;
-    }
-    
-    if (item?.type === 'wire' && item.id) {
-      selectWire(item.id);
-      e.preventDefault();
-      return;
-    } else if (!item || (item.type !== 'wireControlPoint' && item.type !== 'wireSegment')) {
-      selectWire(null);
-    }
-    
-    // Pin interaction for connections
-    if (item?.type === 'pin' && item.position) {
-      const component = circuit.components.find(c => c.id === item.componentId);
-      const pin = component?.pins.find(p => p.id === item.pinId);
-      
-      if (component && pin && item.position) {
-        console.log("Starting connection from pin:", pin.id, "on component:", component.id);
-        connectionPreview.startConnection({
-          nodeId: pin.nodeId!,
-          pinId: pin.id,
-          componentId: component.id,
-          position: item.position
-        });
-        
-        // Initialize connection end at the same position
-        connectionPreview.updateConnectionEnd(item.position, null, circuit);
-        e.preventDefault();
-        return;
-      }
-    }
-    
-    // Fall back to regular mouse handler for other interactions
-    handleMouseDown(e);
-  }, [handleMouseDown, circuit, startDragControlPoint, addControlPoint, selectWire, 
-      connectionPreview, isRunning, onToggleSwitch, selectComponent]);
-  
-  const handleMouseMoveWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Check if we're dragging a wire control point
-    if (draggedWire) {
-      dragControlPoint({ x, y }, circuit);
-      e.preventDefault();
-      return;
-    }
-    
-    // Check if we're creating a connection
-    if (connectionPreview.isConnecting) {
-      const targetItem = findHoveredItem(circuit, x, y);
-      const targetNodeId = targetItem?.type === 'pin' ? 
-        circuit.components.find(c => c.id === targetItem.componentId)?.pins.find(p => p.id === targetItem.pinId)?.nodeId : 
-        targetItem?.type === 'node' ? targetItem.id : null;
-      
-      connectionPreview.updateConnectionEnd({ x, y }, targetNodeId, circuit);
-      e.preventDefault();
-      return;
-    }
-    
-    // Fall back to regular mouse handler for other interactions
-    handleMouseMove(e);
-  }, [handleMouseMove, draggedWire, dragControlPoint, circuit, connectionPreview]);
-  
-  const handleMouseUpWithInteraction = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    // End wire control point dragging if active
-    if (draggedWire) {
-      endDragControlPoint();
-      e.preventDefault();
-      return;
-    }
-    
-    // Complete connection if we're connecting
-    if (connectionPreview.isConnecting) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const targetItem = findHoveredItem(circuit, x, y);
-      
-      if (targetItem?.type === 'pin' && connectionPreview.connectionStart?.nodeId) {
-        // Complete connection to this pin
-        const component = circuit.components.find(c => c.id === targetItem.componentId);
-        const pin = component?.pins.find(p => p.id === targetItem.pinId);
-        
-        if (component && pin && pin.nodeId && 
-            connectionPreview.connectionStart.componentId !== component.id) {
-          console.log("Completing connection to pin:", pin.id, "on component:", component.id);
-          onConnectNodes(connectionPreview.connectionStart.nodeId, pin.nodeId);
-          
-          // Show a success toast
-          toast({
-            title: "Connection Created",
-            description: "Components connected successfully"
-          });
-        }
-      }
-      
-      connectionPreview.resetConnection();
-      e.preventDefault();
-      return;
-    }
-    
-    // Fall back to regular mouse handler for other interactions
-    handleMouseUp(e);
-  }, [handleMouseUp, draggedWire, endDragControlPoint, connectionPreview, circuit, onConnectNodes, toast]);
+
+  // Get canvas event handlers
+  const canvasEvents = CanvasEvents({
+    circuit,
+    canvasRef,
+    connectionPreview,
+    draggedWire,
+    isDragging,
+    hoveredItem,
+    isRunning,
+    onAddComponent,
+    onConnectNodes,
+    onToggleSwitch,
+    onSelectComponent: selectComponent,
+    onSelectWire: selectWire,
+    onContextMenu: handleContextMenu,
+    onDoubleClick: handleDoubleClick,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    dragControlPoint,
+    endDragControlPoint,
+    startDragControlPoint,
+    addControlPoint,
+    selectedComponent
+  });
   
   // Set up canvas drawing with enhanced wire preview and wire selection
   useCanvasDrawing(canvasRef, circuit, {
@@ -357,48 +223,12 @@ export function CircuitCanvas({
     }
   });
   
-  // Determine cursor based on current state for better visual feedback
-  const getCursor = () => {
-    if (draggedWire) return 'grabbing';
-    if (hoveredItem?.type === 'wireControlPoint') return 'pointer';
-    if (hoveredItem?.type === 'wireSegment') return 'pointer';
-    if (hoveredItem?.type === 'pin') return 'crosshair';
-    if (hoveredItem?.type === 'component' && isRunning && hoveredItem.id.includes('switch')) return 'pointer';
-    if (hoveredItem?.type === 'component') return 'move';
-    if (selectedComponent) return 'crosshair';
-    if (connectionPreview.isConnecting) return 'crosshair';
-    if (isDragging) return 'grabbing';
-    return 'default';
+  const closeContextMenu = () => {
+    setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
   };
-  
-  // Get the component for the info panel
-  const getSelectedComponent = () => {
-    if (!infoPanel.show || !infoPanel.componentId) return null;
-    return circuit.components.find(c => c.id === infoPanel.componentId);
-  };
-  
-  // Format properties for display
-  const formatPropValue = (key: string, value: any): string => {
-    if (key === 'current') {
-      const current = Math.abs(value);
-      if (current < 0.001) return `${(current * 1000000).toFixed(2)} µA`;
-      if (current < 1) return `${(current * 1000).toFixed(2)} mA`;
-      return `${current.toFixed(2)} A`;
-    }
-    
-    if (key === 'voltage') return `${value.toFixed(2)} V`;
-    if (key === 'resistance') return `${value.toFixed(0)} Ω`;
-    if (key === 'power') {
-      const power = Math.abs(value);
-      if (power < 0.001) return `${(power * 1000000).toFixed(2)} µW`;
-      if (power < 1) return `${(power * 1000).toFixed(2)} mW`;
-      return `${power.toFixed(2)} W`;
-    }
-    if (key === 'brightness') return `${(value * 100).toFixed(0)}%`;
-    if (key === 'temperature') return `${value.toFixed(1)} °C`;
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    
-    return String(value);
+
+  const closeInfoPanel = () => {
+    setInfoPanel({...infoPanel, show: false});
   };
   
   return (
@@ -407,128 +237,34 @@ export function CircuitCanvas({
         ref={canvasRef}
         className="w-full h-full"
         onClick={handleCanvasClick}
-        onMouseDown={handleMouseDownWithInteraction}
-        onMouseMove={handleMouseMoveWithInteraction}
-        onMouseUp={handleMouseUpWithInteraction}
-        onMouseLeave={handleMouseUpWithInteraction}
+        onMouseDown={canvasEvents.handleMouseDownWithInteraction}
+        onMouseMove={canvasEvents.handleMouseMoveWithInteraction}
+        onMouseUp={canvasEvents.handleMouseUpWithInteraction}
+        onMouseLeave={canvasEvents.handleMouseUpWithInteraction}
         onContextMenu={handleContextMenu}
         onDoubleClick={handleDoubleClick}
-        style={{ cursor: getCursor() }}
+        style={{ cursor: canvasEvents.getCursor() }}
       />
       
-      {/* Right-click context menu */}
-      {rightClickMenu.show && (
-        <div 
-          className="absolute bg-white shadow-lg rounded border border-gray-200 py-1 z-50"
-          style={{
-            left: rightClickMenu.x, 
-            top: rightClickMenu.y
-          }}
-        >
-          <button 
-            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-            onClick={() => {
-              if (rightClickMenu.componentId) {
-                toast({
-                  title: "Component Rotated",
-                  description: "Component rotated 90 degrees clockwise",
-                });
-                
-                // This should trigger the rotation action
-                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));
-              }
-              setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
-            }}
-          >
-            Rotate
-          </button>
-          <button 
-            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-            onClick={() => {
-              if (rightClickMenu.componentId) {
-                // This should trigger the delete action
-                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' }));
-              }
-              setRightClickMenu({ show: false, x: 0, y: 0, componentId: null });
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      )}
+      {/* Context Menu */}
+      <ContextMenu 
+        show={rightClickMenu.show}
+        x={rightClickMenu.x}
+        y={rightClickMenu.y}
+        componentId={rightClickMenu.componentId}
+        onClose={closeContextMenu}
+      />
       
       {/* Component properties info panel */}
-      {infoPanel.show && getSelectedComponent() && (
-        <div 
-          className="absolute bg-white shadow-lg rounded-md border border-gray-200 p-3 z-50"
-          style={{
-            left: Math.min(infoPanel.position.x, window.innerWidth - 240),
-            top: Math.min(infoPanel.position.y, window.innerHeight - 300),
-            width: '220px'
-          }}
-        >
-          <div className="flex justify-between items-center border-b pb-2 mb-2">
-            <h3 className="font-semibold text-sm capitalize">
-              {getSelectedComponent()?.type} Properties
-            </h3>
-            <button 
-              className="text-gray-500 hover:text-gray-700"
-              onClick={() => setInfoPanel({...infoPanel, show: false})}
-            >
-              ✕
-            </button>
-          </div>
-          
-          <div className="space-y-2 max-h-60 overflow-y-auto text-sm">
-            {getSelectedComponent() && Object.entries(getSelectedComponent()!.properties)
-              .filter(([key]) => !key.includes('_') && typeof key === 'string' && key !== 'id')
-              .map(([key, value]) => (
-                <div key={key} className="grid grid-cols-3 gap-2">
-                  <span className="text-gray-600 capitalize">{key}:</span>
-                  <span className="col-span-2 font-medium">
-                    {formatPropValue(key, value)}
-                  </span>
-                </div>
-              ))}
-            
-            {isRunning && getSelectedComponent() && (
-              <div className="mt-2 pt-2 border-t border-gray-100">
-                <div className="text-xs text-blue-600 font-medium mb-1">Real-time Values</div>
-                {getSelectedComponent()?.type === 'led' && (
-                  <div className={`h-3 rounded-full transition-all duration-200 bg-gradient-to-r from-yellow-200 to-yellow-400`} 
-                    style={{ 
-                      width: `${(getSelectedComponent()?.properties.brightness || 0) * 100}%`, 
-                      opacity: (getSelectedComponent()?.properties.brightness || 0)
-                    }}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <InfoPanel 
+        show={infoPanel.show}
+        componentId={infoPanel.componentId}
+        position={infoPanel.position}
+        circuit={circuit}
+      />
       
       {/* Voltage overlay */}
-      {showVoltages && isRunning && (
-        <div className="absolute top-2 right-2 bg-white/80 rounded shadow p-2 text-xs font-mono">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span>5V</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span>3.3V</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-            <span>1.7V</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-            <span>0V</span>
-          </div>
-        </div>
-      )}
+      <VoltageOverlay show={showVoltages && isRunning} />
     </div>
   );
 }
