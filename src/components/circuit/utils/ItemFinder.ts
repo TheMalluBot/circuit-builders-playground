@@ -1,3 +1,4 @@
+
 import { Circuit, CircuitItemType } from '@/types/circuit';
 
 // Define the return type for the findHoveredItem function
@@ -23,7 +24,7 @@ export function findHoveredItem(
   y: number,
   threshold: number = 10
 ): HoveredItem | null {
-  // Check for wire control points and segments first (higher priority)
+  // First check for wire control points (highest priority)
   for (const wire of circuit.wires) {
     if (!wire.path || wire.path.length <= 1) continue;
     

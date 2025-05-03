@@ -67,22 +67,15 @@ export function CircuitSimulator() {
     console.log(`Updating wire ${wireId} path:`, newPath);
     
     // Update the circuit state with the new wire path
-    const updatedCircuit = {
-      ...circuit,
-      wires: circuit.wires.map(wire => {
-        if (wire.id === wireId) {
-          return { ...wire, path: newPath };
-        }
-        return wire;
-      })
-    };
+    if (!circuit) return;
     
-    // We need to use the state updater pattern to ensure we're working with the latest circuit state
-    // Save the updated wire paths back to the circuit
-    if (circuit && updatedCircuit) {
-      // Replace the circuit with the updated one that has the new wire paths
-      Object.assign(circuit, updatedCircuit);
-    }
+    // Update the circuit with the new wire path
+    circuit.wires = circuit.wires.map(wire => {
+      if (wire.id === wireId) {
+        return { ...wire, path: newPath };
+      }
+      return wire;
+    });
   }, [circuit]);
   
   // Handle display options

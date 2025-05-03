@@ -84,7 +84,7 @@ export function CircuitCanvas({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Check if clicking on a wire control point
+    // Check if clicking on a wire control point or segment
     const item = findHoveredItem(circuit, x, y);
     
     if (item?.type === 'wireControlPoint' && item.wireId && item.pointIndex !== undefined && item.position) {
@@ -104,16 +104,16 @@ export function CircuitCanvas({
       return;
     }
     
-    if (item?.type === 'wire') {
+    if (item?.type === 'wire' && item.id) {
       selectWire(item.id);
       e.preventDefault();
       return;
-    } else if (!item) {
-      // Clicking empty space, deselect wire
+    } else if (!item || (item.type !== 'wireControlPoint' && item.type !== 'wireSegment')) {
+      // Clicking empty space or non-wire item, deselect wire
       selectWire(null);
     }
     
-    // Fall back to regular mouse handler
+    // Fall back to regular mouse handler for other interactions
     handleMouseDown(e);
   }, [handleMouseDown, circuit, startDragControlPoint, addControlPoint, selectWire]);
   
@@ -132,7 +132,7 @@ export function CircuitCanvas({
       return;
     }
     
-    // Fall back to regular mouse handler
+    // Fall back to regular mouse handler for other interactions
     handleMouseMove(e);
   }, [handleMouseMove, draggedWire, dragControlPoint, circuit]);
   
@@ -144,7 +144,7 @@ export function CircuitCanvas({
       return;
     }
     
-    // Fall back to regular mouse handler
+    // Fall back to regular mouse handler for other interactions
     handleMouseUp(e);
   }, [handleMouseUp, draggedWire, endDragControlPoint]);
   
