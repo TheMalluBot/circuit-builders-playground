@@ -8,7 +8,7 @@ import { renderNodes } from './nodeRenderer';
 export function renderCircuit(
   ctx: CanvasRenderingContext2D, 
   circuit: Circuit, 
-  options: RenderOptions
+  options: RenderOptions & { selectedWireId?: string | null }
 ): void {
   // Clear canvas
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -17,7 +17,7 @@ export function renderCircuit(
   renderGrid(ctx, options.theme);
   
   // Draw wires first (so they appear behind components)
-  renderWires(ctx, circuit.wires, circuit.nodes, circuit, options);
+  renderWires(ctx, circuit.wires, circuit.nodes, circuit, options, options.selectedWireId || undefined);
   
   // Draw components
   renderComponents(ctx, circuit.components, options);

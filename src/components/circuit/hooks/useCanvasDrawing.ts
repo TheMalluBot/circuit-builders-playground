@@ -4,7 +4,7 @@ import { Circuit } from '@/types/circuit';
 import { renderCircuit } from '@/lib/renderer';
 
 /**
- * Hook to handle canvas drawing with enhanced wire preview
+ * Hook to handle canvas drawing with enhanced wire preview and manipulation
  */
 export function useCanvasDrawing(
   canvasRef: RefObject<HTMLCanvasElement>,
@@ -13,6 +13,7 @@ export function useCanvasDrawing(
     showVoltages: boolean;
     showCurrents: boolean;
     hoveredNodeId: string | null;
+    selectedWireId?: string | null;
     connectionPreview?: {
       getPreviewPath: (circuit: Circuit) => any;
       connectionStart: any;
@@ -37,6 +38,7 @@ export function useCanvasDrawing(
         showVoltages: options.showVoltages,
         showCurrents: options.showCurrents,
         highlightedNodeId: options.hoveredNodeId,
+        selectedWireId: options.selectedWireId,
         theme: 'light',
       });
       

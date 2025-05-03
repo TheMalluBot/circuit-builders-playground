@@ -27,8 +27,10 @@ export interface Wire {
   id: string;
   nodeIds: [string, string]; // Start and end nodes
   current: number;
-  // Added path property for wire routing visualization
-  path?: { x: number; y: number }[];
+  // Enhanced path property with control points for manipulating wire routes
+  path: { x: number; y: number }[];
+  // New property to identify if wire is selected for manipulation
+  selected?: boolean;
 }
 
 export interface Circuit {
@@ -44,5 +46,20 @@ export interface RenderOptions {
   theme: 'light' | 'dark';
 }
 
-// Updated to include 'wire' for consistency
-export type CircuitItemType = 'component' | 'node' | 'pin' | 'wire';
+// Updated to include 'wireSegment' for wire manipulation
+export type CircuitItemType = 'component' | 'node' | 'pin' | 'wire' | 'wireSegment' | 'wireControlPoint';
+
+// New interface for wire segment interaction
+export interface WireSegment {
+  wireId: string;
+  segmentIndex: number;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+}
+
+// New interface for wire control point interaction
+export interface WireControlPoint {
+  wireId: string;
+  pointIndex: number;
+  position: { x: number; y: number };
+}
