@@ -1,3 +1,4 @@
+
 // Import necessary dependencies
 import { useCallback, useState, RefObject, useEffect } from 'react';
 import { Circuit, ComponentType } from '@/types/circuit';
@@ -21,9 +22,9 @@ export interface CanvasInteractionOptions {
   selectWire: (wireId: string | null) => void;
   onMoveComponent?: (id: string, dx: number, dy: number) => void;
   onMoveComplete?: () => void;
-  onDragStart?: () => void;  // Add missing property
-  onConnectionStart?: () => void;  // Add missing property
-  onOperationComplete?: () => void;  // Add missing property
+  onDragStart?: () => void;
+  onConnectionStart?: () => void;
+  onOperationComplete?: () => void;
 }
 
 export function useCanvasInteractions(
@@ -52,7 +53,7 @@ export function useCanvasInteractions(
     onOperationComplete
   } = options;
 
-  const connectionPreview = useConnectionPreview(canvasRef, circuit);
+  const connectionPreview = useConnectionPreview();
   const { isDragging, startDrag, endDrag } = useDrag();
   
   // Handle mouse down on canvas
@@ -84,12 +85,17 @@ export function useCanvasInteractions(
     
     // Handle connection start
     if (item?.type === 'pin') {
-      connectionPreview.startConnecting(item.id);
+      connectionPreview.startConnection({
+        nodeId: item.id,
+        pinId: item.pinId || "",
+        componentId: item.componentId || "",
+        position: { x, y }
+      });
+      
+      if (onConnectionStart) {
+        onConnectionStart();
+      }
     }
-    if (item?.type === 'pin' && onConnectionStart) {
-      onConnectionStart();
-    }
-    
   }, [circuit, connectionPreview, onConnectionStart, onDragStart, selectWire, startDrag]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -105,15 +111,10 @@ export function useCanvasInteractions(
     // Update hovered node for connection preview
     if (item?.type === 'pin') {
       setHoveredNodeId(item.id);
-      connectionPreview.setHoveredNodeId(item.id);
+      connectionPreview.updateConnectionEnd({ x, y }, item.id, circuit);
     } else {
       setHoveredNodeId(null);
-      connectionPreview.setHoveredNodeId(null);
-    }
-    
-    // Handle connection preview updates
-    if (connectionPreview.isConnecting) {
-      connectionPreview.updateConnectionPreview(x, y);
+      connectionPreview.updateConnectionEnd({ x, y }, null, circuit);
     }
     
     // Handle component dragging
@@ -123,7 +124,7 @@ export function useCanvasInteractions(
       
       onMoveComponent(hoveredItem.id, dx, dy);
     }
-  }, [circuit, connectionPreview, hoveredItem?.id, isDragging, onMoveComponent, startDrag]);
+  }, [circuit, connectionPreview, hoveredItem?.id, isDragging, onMoveComponent]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
@@ -136,11 +137,12 @@ export function useCanvasInteractions(
     if (connectionPreview.isConnecting) {
       const item = findHoveredItem(circuit, x, y);
       
-      if (item?.type === 'pin' && item.id !== connectionPreview.connectionStart) {
-        onConnectNodes(connectionPreview.connectionStart, item.id);
+      if (item?.type === 'pin' && connectionPreview.connectionStart && 
+          item.id !== connectionPreview.connectionStart.nodeId) {
+        onConnectNodes(connectionPreview.connectionStart.nodeId || "", item.id);
       }
       
-      connectionPreview.stopConnecting();
+      connectionPreview.resetConnection();
     }
     
     // Handle end of component drag

@@ -1,7 +1,6 @@
+
 import { useState, useCallback } from 'react';
-import { Node, Circuit, Component, Pin } from '@/types/circuit';
-import { calculateWirePath } from '@/lib/interaction';
-import { isNearPin } from '@/lib/simulator/utils/geometryUtils';
+import { Circuit } from '@/types/circuit';
 
 /**
  * Hook to manage wire connection previews with enhanced visual feedback

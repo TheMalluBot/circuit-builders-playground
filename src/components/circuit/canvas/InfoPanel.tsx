@@ -9,7 +9,7 @@ export interface InfoPanelProps {
   componentId: string | null;
   position: { x: number; y: number };
   circuit: Circuit;
-  onClose: () => void;  // Added onClose property
+  onClose: () => void;
 }
 
 export function InfoPanel({ show, componentId, position, circuit, onClose }: InfoPanelProps) {
@@ -30,7 +30,8 @@ export function InfoPanel({ show, componentId, position, circuit, onClose }: Inf
       case 'led':
         return { color: 'Red', forwardVoltage: '1.8V' };
       case 'switch':
-        return { state: component.state ? 'Closed' : 'Open' };
+        // Safely access the closed property from component.properties instead of component.state
+        return { state: component.properties.closed ? 'Closed' : 'Open' };
       default:
         return {};
     }

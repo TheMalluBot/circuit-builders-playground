@@ -315,9 +315,6 @@ export function CircuitSimulator() {
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
-          onDragStart={handleDragStart}
-          onConnectionStart={handleConnectionStart}
-          onOperationComplete={handleOperationComplete}
         />
         
         <CursorModeFeedback

@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
@@ -98,7 +97,10 @@ export function CircuitCanvas({
     selectedWireId,
     selectWire,
     onMoveComponent,
-    onMoveComplete
+    onMoveComplete,
+    onDragStart: () => {}, // Provide empty handlers to fix TypeScript errors
+    onConnectionStart: () => {},
+    onOperationComplete: () => {}
   });
   
   // Handle canvas resizing
