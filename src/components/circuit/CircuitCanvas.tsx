@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+
+import React, { useRef, useCallback, useState } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
 import { useCanvasDrawing } from './hooks/useCanvasDrawing';
@@ -282,11 +283,10 @@ export function CircuitCanvas({
           console.log("Completing connection to pin:", pin.id, "on component:", component.id);
           onConnectNodes(connectionPreview.connectionStart.nodeId, pin.nodeId);
           
-          // Show a success toast
+          // Show a success toast - FIX: Change variant from "success" to "default"
           toast({
             title: "Connection Created",
-            description: "Components connected successfully",
-            variant: "success"
+            description: "Components connected successfully"
           });
         }
       }
