@@ -1,4 +1,3 @@
-
 import { useState, useCallback, RefObject } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { findHoveredItem } from '../utils/ItemFinder';
@@ -16,6 +15,8 @@ export function useCanvasInteractions(
     onAddComponent: (type: ComponentType, x: number, y: number) => void;
     onConnectNodes: (sourceId: string, targetId: string) => void;
     onToggleSwitch: (componentId: string) => void;
+    selectedWireId?: string | null; // Added this property to the options
+    selectWire?: (wireId: string | null) => void; // Added this optional method
   }
 ) {
   // Interaction state
@@ -48,6 +49,12 @@ export function useCanvasInteractions(
     const item = findHoveredItem(circuit, x, y);
     
     if (item) {
+      // Handle wire selection
+      if (item.type === 'wire' && options.selectWire) {
+        options.selectWire(item.id);
+        return;
+      }
+      
       // Handle pin click for connections
       if (item.type === 'pin') {
         if (connectionPreview.connectionStart) {
@@ -102,6 +109,9 @@ export function useCanvasInteractions(
       } else if (connectionPreview.connectionStart) {
         // Cancel connection if clicking empty space
         connectionPreview.resetConnection();
+      } else if (options.selectWire) {
+        // Deselect wire when clicking on empty space
+        options.selectWire(null);
       }
     }
   }, [isDragging, canvasRef, circuit, options, connectionPreview]);

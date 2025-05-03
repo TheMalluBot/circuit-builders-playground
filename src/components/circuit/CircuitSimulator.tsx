@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { ComponentPalette } from './ComponentPalette';
 import { CircuitCanvas } from './CircuitCanvas';
@@ -62,6 +61,16 @@ export function CircuitSimulator() {
     moveComponent(id, dx, dy);
   }, [moveComponent]);
   
+  // Wire manipulation handler
+  const handleUpdateWirePath = useCallback((wireId: string, newPath: { x: number, y: number }[]) => {
+    // For now, just log the wire path update
+    // In a full implementation, this would update the circuit state
+    console.log(`Updating wire ${wireId} path:`, newPath);
+    
+    // This would typically call a function from useSimulation hook
+    // Example: updateWirePath(wireId, newPath);
+  }, []);
+  
   // Handle display options
   const handleToggleVoltages = useCallback(() => {
     setShowVoltages(prev => !prev);
@@ -93,6 +102,7 @@ export function CircuitSimulator() {
           onAddComponent={handleAddComponent}
           onConnectNodes={connectNodes}
           onToggleSwitch={toggleSwitch}
+          onUpdateWirePath={handleUpdateWirePath}
           showVoltages={showVoltages}
           showCurrents={showCurrents}
           isRunning={isRunning}

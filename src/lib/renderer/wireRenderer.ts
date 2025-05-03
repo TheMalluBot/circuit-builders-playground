@@ -1,4 +1,3 @@
-
 import { Wire, Node, Circuit, RenderOptions } from '@/types/circuit';
 import { calculateWirePath } from '../interaction';
 
@@ -72,7 +71,7 @@ function drawWire(
     }
     
     // Draw junction dots where wires cross
-    drawWireCrossings(ctx, wire, wires, options);
+    drawWireCrossings(ctx, wire, circuit.wires, options);
   } else {
     // Calculate path if not available
     const path = calculateWirePath(

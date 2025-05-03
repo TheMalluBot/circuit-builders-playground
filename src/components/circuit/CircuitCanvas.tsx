@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useCallback } from 'react';
 import { Circuit, ComponentType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
