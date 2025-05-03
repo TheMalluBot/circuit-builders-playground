@@ -179,7 +179,7 @@ export function CircuitCanvas({
     canvasRef,
     connectionPreview,
     draggedWire,
-    isDragging: isDragging !== null, // Convert DragState | null to boolean
+    isDragging, // Now correctly passes a boolean
     hoveredItem,
     isRunning,
     onAddComponent,

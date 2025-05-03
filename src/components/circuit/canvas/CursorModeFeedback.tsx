@@ -1,48 +1,58 @@
 
 import React from 'react';
-import { ComponentType } from '@/types/circuit';
+import { ComponentType, CircuitItemType } from '@/types/circuit';
 
 interface CursorModeFeedbackProps {
-  mode: 'default' | 'add' | 'connect' | 'drag' | 'select';
+  cursorMode: 'default' | 'connect' | 'drag' | 'addComponent';
   selectedComponent: ComponentType | null;
-  position: { x: number; y: number };
-  visible: boolean;
+  position: { x: number; y: number } | null;
 }
 
-export function CursorModeFeedback({ mode, selectedComponent, position, visible }: CursorModeFeedbackProps) {
-  if (!visible) return null;
+/**
+ * Displays visual feedback about the current cursor mode
+ */
+export function CursorModeFeedback({ 
+  cursorMode, 
+  selectedComponent, 
+  position 
+}: CursorModeFeedbackProps) {
+  if (!position) return null;
   
-  const getBgColor = () => {
-    switch (mode) {
-      case 'add': return 'bg-green-500';
-      case 'connect': return 'bg-blue-500';
-      case 'drag': return 'bg-amber-500';
-      case 'select': return 'bg-purple-500';
-      default: return 'bg-gray-500';
-    }
-  };
+  // Don't show feedback in default mode
+  if (cursorMode === 'default') return null;
   
-  const getText = () => {
-    switch (mode) {
-      case 'add': return selectedComponent ? `Add ${selectedComponent}` : 'Add';
-      case 'connect': return 'Connect';
-      case 'drag': return 'Move';
-      case 'select': return 'Selected';
-      default: return '';
-    }
-  };
+  const { x, y } = position;
   
   return (
     <div 
-      className={`absolute z-50 px-2 py-1 rounded-md text-white text-xs font-medium ${getBgColor()} shadow-md`}
+      className="absolute pointer-events-none z-50 flex items-center justify-center"
       style={{
-        left: position.x + 20,
-        top: position.y - 10,
-        pointerEvents: 'none',
-        opacity: 0.9
+        left: x,
+        top: y,
+        transform: 'translate(-50%, -50%)'
       }}
     >
-      {getText()}
+      {cursorMode === 'connect' && (
+        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-4 h-4 bg-white rounded-full"></div>
+        </div>
+      )}
+      
+      {cursorMode === 'drag' && (
+        <div className="w-8 h-8 border-2 border-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+        </div>
+      )}
+      
+      {cursorMode === 'addComponent' && selectedComponent && (
+        <div className="bg-blue-100 border-2 border-dashed border-blue-500 rounded-md p-2 flex items-center justify-center">
+          <div className="text-blue-500 text-sm font-medium">
+            {selectedComponent.charAt(0).toUpperCase() + selectedComponent.slice(1)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default CursorModeFeedback;

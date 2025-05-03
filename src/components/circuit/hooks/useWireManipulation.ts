@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Wire, Circuit } from '@/types/circuit';
 
@@ -20,13 +21,14 @@ export function useWireManipulation(
   const startDragControlPoint = useCallback((
     wireId: string,
     pointIndex: number,
-    position: { x: number; y: number }
+    x: number,
+    y: number
   ) => {
     console.log(`Starting to drag control point ${pointIndex} of wire ${wireId}`);
     setDraggedWire({
       wireId,
       pointIndex,
-      startPos: position
+      startPos: { x, y }
     });
     setSelectedWireId(wireId);
   }, []);
@@ -35,10 +37,18 @@ export function useWireManipulation(
    * Handle dragging of a wire control point
    */
   const dragControlPoint = useCallback((
-    position: { x: number; y: number },
-    circuit: Circuit
+    x: number,
+    y: number,
+    circuit?: Circuit
   ) => {
     if (!draggedWire) return;
+    
+    // If no circuit provided, just update the control point position
+    if (!circuit) {
+      const newPosition = { x, y };
+      onUpdateWirePath(draggedWire.wireId, [newPosition]);
+      return;
+    }
     
     // Find the wire being manipulated
     const wire = circuit.wires.find(w => w.id === draggedWire.wireId);
@@ -48,10 +58,7 @@ export function useWireManipulation(
     const newPath = [...wire.path];
     
     // Update the position of the dragged point
-    newPath[draggedWire.pointIndex] = {
-      x: position.x,
-      y: position.y
-    };
+    newPath[draggedWire.pointIndex] = { x, y };
     
     // If dragging first or last point, handle attachment to nodes
     if (draggedWire.pointIndex === 0 || draggedWire.pointIndex === newPath.length - 1) {
@@ -79,19 +86,25 @@ export function useWireManipulation(
     wireId: string,
     segmentIndex: number,
     position: { x: number; y: number },
-    circuit: Circuit
+    circuit?: Circuit
   ) => {
-    const wire = circuit.wires.find(w => w.id === wireId);
-    if (!wire || !wire.path || wire.path.length <= segmentIndex) return;
-    
-    console.log(`Adding control point to wire ${wireId} at segment ${segmentIndex}`);
-    
-    // Create a new path with the point inserted
-    const newPath = [...wire.path];
-    newPath.splice(segmentIndex + 1, 0, position);
-    
-    // Update the wire
-    onUpdateWirePath(wireId, newPath);
+    if (circuit) {
+      const wire = circuit.wires.find(w => w.id === wireId);
+      if (!wire || !wire.path || wire.path.length <= segmentIndex) return;
+      
+      console.log(`Adding control point to wire ${wireId} at segment ${segmentIndex}`);
+      
+      // Create a new path with the point inserted
+      const newPath = [...wire.path];
+      newPath.splice(segmentIndex + 1, 0, position);
+      
+      // Update the wire
+      onUpdateWirePath(wireId, newPath);
+    } else {
+      // Simplified version for when circuit isn't provided
+      console.log(`Adding control point to wire ${wireId} at segment ${segmentIndex}`);
+      onUpdateWirePath(wireId, [position]);
+    }
     
     // Select the wire for further manipulation
     setSelectedWireId(wireId);

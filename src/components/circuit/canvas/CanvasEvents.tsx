@@ -94,7 +94,7 @@ export function CanvasEvents({
     handleMouseMoveWithInteraction,
     handleMouseUpWithInteraction,
     getCursor: () => getCursor({
-      isDragging,
+      isDragging, // Boolean value
       isConnecting: connectionPreview?.isConnecting || false,
       hoveredItem,
       isRunning,

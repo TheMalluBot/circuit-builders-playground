@@ -54,7 +54,7 @@ export function useCanvasInteractions(
   } = options;
 
   const connectionPreview = useConnectionPreview();
-  const { isDragging, startDrag, endDrag } = useDrag();
+  const { isDragging, dragState, startDrag, endDrag } = useDrag();
   
   // Handle mouse down on canvas
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -72,14 +72,14 @@ export function useCanvasInteractions(
       // Start dragging component
       if (item.type === 'component') {
         startDrag(item.id, x, y);
+        if (onDragStart) {
+          onDragStart();
+        }
       }
       
-      // Select item
-      selectWire(item.id);
-      
-      // Signal drag start for parent component
-      if (item.type === 'component' && onDragStart) {
-        onDragStart();
+      // Select wire if clicked on wire or wire segment
+      if (item.type === 'wire' || item.type === 'wireSegment') {
+        selectWire(item.id);
       }
     }
     
@@ -96,7 +96,7 @@ export function useCanvasInteractions(
         onConnectionStart();
       }
     }
-  }, [circuit, connectionPreview, onConnectionStart, onDragStart, selectWire, startDrag]);
+  }, [circuit, connectionPreview, onConnectionStart, onDragStart, selectWire, startDrag, canvasRef]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
@@ -118,13 +118,13 @@ export function useCanvasInteractions(
     }
     
     // Handle component dragging
-    if (isDragging && hoveredItem?.type === 'component' && onMoveComponent) {
-      const dx = x - isDragging.startX;
-      const dy = y - isDragging.startY;
+    if (dragState && hoveredItem?.type === 'component' && onMoveComponent) {
+      const dx = x - dragState.startX;
+      const dy = y - dragState.startY;
       
       onMoveComponent(hoveredItem.id, dx, dy);
     }
-  }, [circuit, connectionPreview, hoveredItem?.id, isDragging, onMoveComponent]);
+  }, [circuit, connectionPreview, hoveredItem?.id, dragState, onMoveComponent, canvasRef]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
@@ -146,7 +146,7 @@ export function useCanvasInteractions(
     }
     
     // Handle end of component drag
-    if (isDragging && hoveredItem?.type === 'component') {
+    if (dragState && hoveredItem?.type === 'component') {
       endDrag();
       if (onMoveComplete) {
         onMoveComplete();
@@ -154,7 +154,7 @@ export function useCanvasInteractions(
     }
     
     setHoveredItem(null);
-  }, [circuit, connectionPreview, endDrag, hoveredItem?.type, isDragging, onConnectNodes, onMoveComplete]);
+  }, [circuit, connectionPreview, endDrag, hoveredItem?.type, dragState, onConnectNodes, onMoveComplete, canvasRef]);
   
   // Handle canvas click
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
@@ -170,7 +170,7 @@ export function useCanvasInteractions(
     if (selectedComponent && !item) {
       onAddComponent(selectedComponent, x, y);
     }
-  }, [circuit, onAddComponent, selectedComponent]);
+  }, [circuit, onAddComponent, selectedComponent, canvasRef]);
   
   // Cleanup function when operations complete
   useEffect(() => {

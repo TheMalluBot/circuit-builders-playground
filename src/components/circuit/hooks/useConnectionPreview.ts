@@ -20,7 +20,7 @@ export function useConnectionPreview() {
   const [magneticSnap, setMagneticSnap] = useState<{ 
     position: { x: number; y: number };
     active: boolean;
-  }>({ position: { x: 0, y: 0 }, active: false });
+  } | null>({ position: { x: 0, y: 0 }, active: false });
   
   // Start connection from a pin
   const startConnection = useCallback((data: {
@@ -114,7 +114,7 @@ export function useConnectionPreview() {
     if (!connectionStart) return { path: [], isValidTarget: false, endPos: { x: 0, y: 0 } };
     
     // Use magnetic snapping position if active, otherwise use mouse position
-    const endPos = magneticSnap.active 
+    const endPos = magneticSnap && magneticSnap.active 
       ? magneticSnap.position 
       : currentMousePos;
     

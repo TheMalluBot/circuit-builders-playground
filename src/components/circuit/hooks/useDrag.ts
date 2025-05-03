@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 
-interface DragState {
+export interface DragState {
   id: string;
   startX: number;
   startY: number;
@@ -23,7 +23,8 @@ export function useDrag() {
   }, []);
   
   return {
-    isDragging: dragState, // This returns DragState | null
+    isDragging: !!dragState, // Return boolean for type safety
+    dragState, // Return the actual state for position calculations
     startDrag,
     endDrag
   };
