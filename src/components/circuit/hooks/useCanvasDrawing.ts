@@ -1,3 +1,4 @@
+
 import { useEffect, RefObject } from 'react';
 import { Circuit } from '@/types/circuit';
 import { renderCircuit } from '@/lib/renderer';
@@ -13,9 +14,9 @@ export function useCanvasDrawing(
     showCurrents: boolean;
     hoveredNodeId?: string;
     selectedWireId?: string;
-    selectedComponentId?: string;  // Add this line to track selected components
+    selectedComponentId?: string;
     connectionPreview?: {
-      getPreviewPath: (circuit: Circuit) => { x: number; y: number }[];
+      getPreviewPath: (circuit: Circuit) => { path: { x: number; y: number }[]; isValidTarget: boolean; endPos: { x: number; y: number } };
       connectionStart?: { nodeId: string; componentId: string; position: { x: number; y: number } };
       isConnecting: boolean;
       magneticSnap?: { point: { x: number; y: number }; nodeId: string | null } | null;
@@ -66,7 +67,7 @@ export function useCanvasDrawing(
 function drawConnectionPreview(
   ctx: CanvasRenderingContext2D,
   connectionPreview: {
-    getPreviewPath: (circuit: Circuit) => { x: number; y: number }[];
+    getPreviewPath: (circuit: Circuit) => { path: { x: number; y: number }[]; isValidTarget: boolean; endPos: { x: number; y: number } };
     connectionStart?: { nodeId: string; componentId: string; position: { x: number; y: number } };
     isConnecting: boolean;
     magneticSnap?: { point: { x: number; y: number }; nodeId: string | null } | null;
@@ -96,7 +97,10 @@ function drawConnectionPreview(
   ctx.setLineDash([]);
   
   // Draw highlight on valid target pin or magnetic snap point
-  if (isValidTarget || (connectionPreview.magneticSnap && connectionPreview.magneticSnap.active)) {
+  const magneticSnapActive = connectionPreview.magneticSnap && 
+                            connectionPreview.magneticSnap.point !== undefined;
+  
+  if (isValidTarget || magneticSnapActive) {
     const endPos = path[path.length - 1];
     
     // Draw outer glow
@@ -128,36 +132,4 @@ function drawConnectionPreview(
   ctx.beginPath();
   ctx.arc(startPos.x, startPos.y, 6, 0, Math.PI * 2);
   ctx.fill();
-  
-  // Draw selection highlight for selected component
-  if (options.selectedComponentId) {
-    const selectedComponent = circuit.components.find(c => c.id === options.selectedComponentId);
-    if (selectedComponent) {
-      ctx.save();
-      ctx.strokeStyle = '#3b82f6'; // Blue highlight for selected component
-      ctx.lineWidth = 2;
-      
-      // Draw a highlight box around the selected component
-      const size = selectedComponent.type === 'resistor' || selectedComponent.type === 'switch' ? 
-        { width: 80, height: 40 } : { width: 60, height: 60 };
-      
-      ctx.translate(selectedComponent.position.x, selectedComponent.position.y);
-      if (selectedComponent.rotation) {
-        ctx.rotate((selectedComponent.rotation * Math.PI) / 180);
-      }
-      
-      // Draw dashed highlight box
-      ctx.setLineDash([5, 3]);
-      ctx.strokeRect(-size.width/2, -size.height/2, size.width, size.height);
-      ctx.setLineDash([]);
-      
-      // Draw rotation handle
-      ctx.fillStyle = '#3b82f6';
-      ctx.beginPath();
-      ctx.arc(0, -size.height/2 - 15, 5, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.restore();
-    }
-  }
 }

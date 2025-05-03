@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { ComponentPalette } from './ComponentPalette';
 import { CircuitCanvas } from './CircuitCanvas';
@@ -28,9 +27,9 @@ export function CircuitSimulator() {
   
   // Handle component selection from palette
   const handleComponentSelect = (type: ComponentType) => {
-    setSelectedComponent(prevType => prevType === type ? null : type);
+    setSelectedComponent(currentType => currentType === type ? null : type);
     
-    if (type && prevType !== type) {
+    if (type) {
       toast({
         title: "Component Selected",
         description: `${type.charAt(0).toUpperCase() + type.slice(1)} selected. Click on the canvas to place it.`

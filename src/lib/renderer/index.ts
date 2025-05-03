@@ -7,6 +7,7 @@ import { renderNodes } from './nodeRenderer';
 
 export interface CircuitRenderOptions extends RenderOptions {
   selectedWireId?: string | null;
+  selectedComponentId?: string | null;
 }
 
 export function renderCircuit(

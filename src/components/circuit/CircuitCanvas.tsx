@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
@@ -312,7 +311,10 @@ export function CircuitCanvas({
       getPreviewPath: (c: Circuit) => connectionPreview.getPreviewPath(c),
       connectionStart: connectionPreview.connectionStart,
       isConnecting: connectionPreview.isConnecting,
-      magneticSnap: connectionPreview.magneticSnap
+      magneticSnap: {
+        point: connectionPreview.magneticSnap?.position || { x: 0, y: 0 },
+        nodeId: connectionPreview.hoveredNodeId
+      }
     }
   });
   

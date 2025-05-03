@@ -20,9 +20,9 @@ export function useConnectionPreview() {
   const [currentMousePos, setCurrentMousePos] = useState({ x: 0, y: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [magneticSnap, setMagneticSnap] = useState<{ 
-    active: boolean; 
-    position: { x: number; y: number } 
-  }>({ active: false, position: { x: 0, y: 0 } });
+    position: { x: number; y: number };
+    active: boolean;
+  }>({ position: { x: 0, y: 0 }, active: false });
   
   // Start connection from a pin
   const startConnection = useCallback((data: {
@@ -90,8 +90,8 @@ export function useConnectionPreview() {
       
       if (closestPin) {
         setMagneticSnap({ 
-          active: true, 
-          position: closestPin.position 
+          position: closestPin.position,
+          active: true 
         });
         setHoveredNodeId(closestPin.nodeId);
         foundSnappablePin = true;
@@ -99,7 +99,7 @@ export function useConnectionPreview() {
     }
     
     if (!foundSnappablePin) {
-      setMagneticSnap({ active: false, position: { x: 0, y: 0 } });
+      setMagneticSnap({ position: { x: 0, y: 0 }, active: false });
     }
   }, [connectionStart]);
   
@@ -108,12 +108,12 @@ export function useConnectionPreview() {
     console.log("Connection reset");
     setConnectionStart(null);
     setHoveredNodeId(null);
-    setMagneticSnap({ active: false, position: { x: 0, y: 0 } });
+    setMagneticSnap({ position: { x: 0, y: 0 }, active: false });
   }, []);
   
   // Get smart wire path for preview
   const getPreviewPath = useCallback((circuit: Circuit) => {
-    if (!connectionStart) return null;
+    if (!connectionStart) return { path: [], isValidTarget: false, endPos: { x: 0, y: 0 } };
     
     // Use magnetic snapping position if active, otherwise use mouse position
     const endPos = magneticSnap.active 
