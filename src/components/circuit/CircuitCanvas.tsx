@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasInteractions } from './hooks/useCanvasInteractions';
@@ -178,7 +179,7 @@ export function CircuitCanvas({
     canvasRef,
     connectionPreview,
     draggedWire,
-    isDragging,
+    isDragging: isDragging !== null, // Convert DragState | null to boolean
     hoveredItem,
     isRunning,
     onAddComponent,

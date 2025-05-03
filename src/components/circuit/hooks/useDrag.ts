@@ -23,7 +23,7 @@ export function useDrag() {
   }, []);
   
   return {
-    isDragging: dragState,
+    isDragging: dragState, // This returns DragState | null
     startDrag,
     endDrag
   };
