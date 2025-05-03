@@ -53,8 +53,6 @@ export function useWireManipulation(
       y: position.y
     };
     
-    console.log(`Updating wire ${draggedWire.wireId} path:`, newPath);
-    
     // If dragging first or last point, handle attachment to nodes
     if (draggedWire.pointIndex === 0 || draggedWire.pointIndex === newPath.length - 1) {
       // Find attached node positions to maintain connections

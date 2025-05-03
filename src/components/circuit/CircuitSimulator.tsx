@@ -62,7 +62,7 @@ export function CircuitSimulator() {
     moveComponent(id, dx, dy);
   }, [moveComponent]);
   
-  // Wire manipulation handler - Fixed implementation for wire path updates
+  // Wire manipulation handler for wire path updates
   const handleUpdateWirePath = useCallback((wireId: string, newPath: { x: number, y: number }[]) => {
     console.log(`Updating wire ${wireId} path:`, newPath);
     

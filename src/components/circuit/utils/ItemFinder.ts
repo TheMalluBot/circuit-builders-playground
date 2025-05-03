@@ -1,4 +1,3 @@
-
 import { Circuit, CircuitItemType } from '@/types/circuit';
 
 // Define the return type for the findHoveredItem function
@@ -64,9 +63,6 @@ export function findHoveredItem(
       }
     }
   }
-
-  // Continue checking for other elements...
-  // (components, pins, nodes, etc.)
 
   // If no specific part is hovered, check if entire wire is hovered
   for (const wire of circuit.wires) {

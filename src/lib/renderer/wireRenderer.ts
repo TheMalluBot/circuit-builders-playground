@@ -14,6 +14,7 @@ export function renderWires(
   selectedWireId?: string
 ): void {
   wires.forEach(wire => {
+    // Mark selected wire for rendering
     const isSelected = wire.id === selectedWireId || wire.selected;
     drawWire(ctx, wire, nodes, circuit, options, isSelected);
   });
