@@ -3,6 +3,7 @@ import React from 'react';
 import { CircuitSimulator } from '@/components/circuit/CircuitSimulator';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { BrowserRouter } from 'react-router-dom';
 
 const PlaygroundPage = () => {
   return (
@@ -50,7 +51,10 @@ const PlaygroundPage = () => {
         </div>
       </main>
       
-      <Footer />
+      {/* Properly wrap Footer in its own Router when used outside of App-level router */}
+      <BrowserRouter>
+        <Footer />
+      </BrowserRouter>
     </div>
   );
 }

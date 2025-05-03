@@ -64,6 +64,8 @@ export interface RenderOptions {
   highlightedNodeId?: string | null;
   theme: 'light' | 'dark';
   animateCurrentFlow?: boolean;
+  selectedComponentId?: string | null;
+  selectedWireId?: string | null;
 }
 
 // Updated to include 'wireSegment' for wire manipulation

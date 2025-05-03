@@ -7,8 +7,8 @@ import {
   Pause, 
   RotateCcw, 
   Zap, 
-  Droplets,
-  Waves
+  Waves,
+  Thermometer
 } from 'lucide-react';
 
 interface SimulationControlsProps {
@@ -20,6 +20,8 @@ interface SimulationControlsProps {
   onToggleVoltages: () => void;
   showCurrents: boolean;
   onToggleCurrents: () => void;
+  animateCurrentFlow?: boolean;
+  onToggleAnimation?: () => void;
 }
 
 export function SimulationControls({
@@ -30,7 +32,9 @@ export function SimulationControls({
   showVoltages,
   onToggleVoltages,
   showCurrents,
-  onToggleCurrents
+  onToggleCurrents,
+  animateCurrentFlow = true,
+  onToggleAnimation = () => {}
 }: SimulationControlsProps) {
   return (
     <div className="p-2 border-t border-gray-200 bg-white flex justify-between items-center">
@@ -77,6 +81,18 @@ export function SimulationControls({
             id="toggle-current"
             checked={showCurrents}
             onCheckedChange={onToggleCurrents}
+          />
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <label htmlFor="toggle-animation" className="text-sm flex items-center">
+            <Thermometer size={16} className="mr-1 text-green-500" />
+            Animation
+          </label>
+          <Switch
+            id="toggle-animation"
+            checked={animateCurrentFlow}
+            onCheckedChange={onToggleAnimation}
           />
         </div>
       </div>
