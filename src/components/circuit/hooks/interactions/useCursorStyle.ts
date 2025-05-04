@@ -33,7 +33,7 @@ export function useCursorStyle() {
     if (hoveredItem?.type === 'component' && isRunning && hoveredItem.id.includes('switch')) return 'pointer';
     
     // Component interaction cursors
-    if (hoveredItem?.type === 'component') return 'move';
+    if (hoveredItem?.type === 'component') return isDragging ? 'grabbing' : 'grab';
     
     // Placement mode
     if (selectedComponent) return 'crosshair';
