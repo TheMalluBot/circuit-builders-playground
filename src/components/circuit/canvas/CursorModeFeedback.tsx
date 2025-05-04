@@ -12,6 +12,7 @@ export interface CursorModeFeedbackProps {
 
 /**
  * Component that provides visual feedback about the current cursor mode
+ * Positioned directly next to the cursor for better usability
  */
 export function CursorModeFeedback({ 
   mode, 
@@ -69,12 +70,12 @@ export function CursorModeFeedback({
     <div 
       className={`absolute pointer-events-none flex items-center rounded-md px-2 py-1 text-white text-sm ${bgColor} shadow-md z-50 opacity-90`}
       style={{
-        left: position.x + 8,  // Position very close to the cursor
-        top: position.y - 8,   // Position just above the cursor
-        transform: 'translate(-50%, -100%)', // Center horizontally and position above
+        left: position.x + 16,  // Position next to cursor (not far away)
+        top: position.y,        // Aligned with the cursor height
+        transform: 'translateY(-50%)', // Center vertically relative to cursor
       }}
     >
-      {IconComponent && <IconComponent size={16} className="mr-1" />}
+      {IconComponent && <IconComponent size={14} className="mr-1" />}
       <span>{label}</span>
     </div>
   );

@@ -35,7 +35,7 @@ export function useCursorStyle() {
     // Component interaction cursors
     if (hoveredItem?.type === 'component') return isDragging ? 'grabbing' : 'grab';
     
-    // Placement mode
+    // Placement mode - use a cursor that matches the feedback
     if (selectedComponent) return 'crosshair';
     
     // Connection mode
