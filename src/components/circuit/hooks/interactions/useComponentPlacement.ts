@@ -16,7 +16,7 @@ export function useComponentPlacement(
   /**
    * Handle canvas click for component placement
    */
-  const handleCanvasClick = useCallback((e: React.MouseEvent, hasDragged: boolean = false) => {
+  const handlePlacement = useCallback((e: React.MouseEvent, hasDragged: boolean = false) => {
     if (!canvasRef.current || hasDragged || !selectedComponent) return;
     
     const coords = getCanvasCoords(e);
@@ -24,6 +24,6 @@ export function useComponentPlacement(
   }, [canvasRef, selectedComponent, onAddComponent, getCanvasCoords]);
 
   return {
-    handleCanvasClick
+    handlePlacement
   };
 }

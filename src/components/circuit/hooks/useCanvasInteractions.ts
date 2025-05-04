@@ -1,5 +1,5 @@
 
-import { useCallback, useState, RefObject } from 'react';
+import { useCallback, RefObject } from 'react';
 import { Circuit, ComponentType, CircuitItemType } from '@/types/circuit';
 import { useCanvasHover } from './interactions/useCanvasHover';
 import { useComponentPlacement } from './interactions/useComponentPlacement'; 
@@ -44,7 +44,7 @@ export function useCanvasInteractions(
   // Compose the smaller hooks
   const { clickStartPosition, getCanvasCoords, setStartPosition, resetStartPosition } = useCanvasMousePosition(canvasRef);
   const { hoveredItem, hoveredNodeId, updateHoverState, resetHoverState } = useCanvasHover(canvasRef, circuit);
-  const { handleCanvasClick } = useComponentPlacement(canvasRef, selectedComponent, onAddComponent);
+  const { handlePlacement } = useComponentPlacement(canvasRef, selectedComponent, onAddComponent);
   const { connectionPreview, startConnection, updateConnection, completeConnection } = useConnectionManager(canvasRef, circuit, onConnectNodes);
   const { isDragging, hasDragged, startComponentDrag, updateComponentDrag, completeComponentDrag } = useComponentMovement(canvasRef, onMoveComponent, onMoveComplete);
 
@@ -117,8 +117,8 @@ export function useCanvasInteractions(
   
   // Handle canvas click for component placement
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    handleCanvasClick(e, hasDragged);
-  }, [handleCanvasClick, hasDragged]);
+    handlePlacement(e, hasDragged);
+  }, [handlePlacement, hasDragged]);
 
   return {
     hoveredItem,

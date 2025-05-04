@@ -1,17 +1,16 @@
 
 import { useState, useCallback, RefObject } from 'react';
-import { CanvasPosition } from '@/types/circuit';
 
 /**
  * Hook to track and manage mouse position on the canvas
  */
 export function useCanvasMousePosition(canvasRef: RefObject<HTMLCanvasElement>) {
-  const [clickStartPosition, setClickStartPosition] = useState<CanvasPosition | null>(null);
+  const [clickStartPosition, setClickStartPosition] = useState<{ x: number; y: number } | null>(null);
 
   /**
    * Get canvas coordinates from mouse event
    */
-  const getCanvasCoords = useCallback((e: React.MouseEvent): { x: number, y: number } => {
+  const getCanvasCoords = useCallback((e: React.MouseEvent): { x: number; y: number } => {
     if (!canvasRef.current) return { x: 0, y: 0 };
     
     const rect = canvasRef.current.getBoundingClientRect();
