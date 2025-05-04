@@ -44,9 +44,6 @@ export function useDrag() {
   }, [dragState]);
   
   const endDrag = useCallback(() => {
-    // Add a more robust delay to ensure dragging state is properly reset
-    // before allowing other interactions like click events
-    
     // Store the current dragState in a local variable for the timeout callback
     const currentDragState = dragState;
     

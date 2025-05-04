@@ -14,15 +14,21 @@ export function useCanvasHover(
   const { getCanvasCoords } = useCanvasMousePosition(canvasRef);
   const [hoveredItem, setHoveredItem] = useState<{ type: CircuitItemType; id: string } | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   /**
    * Update hover state based on mouse position
    */
-  const updateHoverState = useCallback((e: React.MouseEvent) => {
+  const updateHoverState = useCallback((e: React.MouseEvent, isDraggingComponent: boolean = false) => {
     if (!canvasRef.current) return null;
     
+    // Store dragging state for other methods
+    setIsDragging(isDraggingComponent);
+    
     const coords = getCanvasCoords(e);
-    const item = findHoveredItem(circuit, coords.x, coords.y);
+    
+    // When dragging components, ignore component detection to prevent issues
+    const item = findHoveredItem(circuit, coords.x, coords.y, 10, isDraggingComponent);
     
     setHoveredItem(item);
     
@@ -42,11 +48,13 @@ export function useCanvasHover(
   const resetHoverState = useCallback(() => {
     setHoveredItem(null);
     setHoveredNodeId(null);
+    setIsDragging(false);
   }, []);
 
   return {
     hoveredItem,
     hoveredNodeId,
+    isDragging,
     updateHoverState,
     resetHoverState
   };

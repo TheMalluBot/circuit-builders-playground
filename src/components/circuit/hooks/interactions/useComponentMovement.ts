@@ -18,6 +18,7 @@ export function useComponentMovement(
    * Start dragging a component
    */
   const startComponentDrag = useCallback((e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent event bubbling
     const coords = getCanvasCoords(e);
     startDrag(id, coords.x, coords.y);
   }, [startDrag, getCanvasCoords]);
@@ -26,7 +27,11 @@ export function useComponentMovement(
    * Update component position during drag
    */
   const updateComponentDrag = useCallback((e: React.MouseEvent, id: string) => {
-    if (!dragState) return;
+    if (!dragState || dragState.id !== id) return;
+    
+    // Prevent accidental interactions during drag
+    e.stopPropagation();
+    e.preventDefault();
     
     const coords = getCanvasCoords(e);
     const dx = coords.x - dragState.startX;

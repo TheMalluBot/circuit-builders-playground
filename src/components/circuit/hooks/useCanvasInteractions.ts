@@ -84,7 +84,8 @@ export function useCanvasInteractions(
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     
-    const item = updateHoverState(e);
+    // Update hover state - pass isDragging to ignore components while dragging
+    const item = updateHoverState(e, isDragging);
     
     // Update connection preview
     if (connectionPreview.isConnecting) {

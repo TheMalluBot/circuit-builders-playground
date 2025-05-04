@@ -1,4 +1,3 @@
-
 import { Circuit, CircuitItemType } from '@/types/circuit';
 
 // Define the return type for the findHoveredItem function
@@ -22,7 +21,8 @@ export function findHoveredItem(
   circuit: Circuit,
   x: number,
   y: number,
-  threshold: number = 10
+  threshold: number = 10,
+  ignoreComponents: boolean = false // Added parameter to ignore components when dragging
 ): HoveredItem | null {
   // First check for pins (highest priority for connections)
   for (const component of circuit.components) {
@@ -59,14 +59,17 @@ export function findHoveredItem(
     }
   }
 
-  // Check for components (more accurate hit detection)
-  for (const component of circuit.components) {
-    // More accurate component hit detection based on component type and size
-    if (isInsideComponent(x, y, component)) {
-      return {
-        type: 'component',
-        id: component.id
-      };
+  // Skip component detection when requested (e.g. during dragging)
+  if (!ignoreComponents) {
+    // Check for components (more accurate hit detection)
+    for (const component of circuit.components) {
+      // More accurate component hit detection based on component type and size
+      if (isInsideComponent(x, y, component)) {
+        return {
+          type: 'component',
+          id: component.id
+        };
+      }
     }
   }
   

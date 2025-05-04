@@ -52,7 +52,7 @@ export function useConnectionPreview() {
       );
       
       // Find the closest pin within snapping distance
-      let closestDistance = 20; // Increased snap threshold
+      let closestDistance = 20; // Snap threshold
       let closestPin: { position: { x: number; y: number }; nodeId: string | null } | null = null;
       
       for (const comp of componentsToCheck) {
@@ -87,6 +87,7 @@ export function useConnectionPreview() {
       }
       
       if (closestPin) {
+        // Position the snap cursor exactly at the pin position - no offset
         setMagneticSnap({ 
           position: closestPin.position,
           active: true 
@@ -180,4 +181,3 @@ export function useConnectionPreview() {
     isConnecting: !!connectionStart
   };
 }
-
