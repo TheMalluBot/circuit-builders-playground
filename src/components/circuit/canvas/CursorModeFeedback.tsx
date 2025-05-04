@@ -70,7 +70,7 @@ export function CursorModeFeedback({
     <div 
       className={`absolute pointer-events-none flex items-center rounded-md px-2 py-1 text-white text-sm ${bgColor} shadow-md z-50 opacity-90`}
       style={{
-        left: position.x + 16,  // Position next to cursor (not far away)
+        left: position.x + 4,  // Position extremely close to cursor (reduced from 16)
         top: position.y,        // Aligned with the cursor height
         transform: 'translateY(-50%)', // Center vertically relative to cursor
       }}
