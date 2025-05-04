@@ -69,9 +69,9 @@ export function CursorModeFeedback({
     <div 
       className={`absolute pointer-events-none flex items-center rounded-md px-2 py-1 text-white text-sm ${bgColor} shadow-md z-50 opacity-90`}
       style={{
-        left: position.x + 15,
-        top: position.y + 15,
-        transform: 'translate(0, -50%)',
+        left: position.x + 10,  // Reduce offset to stay closer to cursor
+        top: position.y - 10,   // Position above cursor instead of to the side
+        transform: 'translate(0, -100%)', // Move it up above the cursor
       }}
     >
       {IconComponent && <IconComponent size={16} className="mr-1" />}

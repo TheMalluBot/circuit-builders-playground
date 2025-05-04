@@ -11,15 +11,22 @@ export function useDrag() {
   const [dragState, setDragState] = useState<DragState | null>(null);
   
   const startDrag = useCallback((id: string, x: number, y: number) => {
+    // Prevent starting a new drag if we're already dragging
+    if (dragState) return;
+    
     setDragState({
       id,
       startX: x,
       startY: y
     });
-  }, []);
+  }, [dragState]);
   
   const endDrag = useCallback(() => {
-    setDragState(null);
+    // Add a small delay to prevent immediate click after drag
+    // This helps prevent accidental deletions when ending drag operations
+    setTimeout(() => {
+      setDragState(null);
+    }, 50);
   }, []);
   
   return {
