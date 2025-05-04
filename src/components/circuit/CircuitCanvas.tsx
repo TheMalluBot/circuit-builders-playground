@@ -7,10 +7,13 @@ import { useWireManipulation } from './hooks/useWireManipulation';
 import { resizeCanvas } from './utils/CanvasUtils';
 import { findHoveredItem } from './utils/ItemFinder';
 import { useToast } from '@/hooks/use-toast';
-import { InfoPanel } from './canvas/InfoPanel';
-import { VoltageOverlay } from './canvas/VoltageOverlay';
-import { CanvasEvents } from './canvas/CanvasEvents';
 import { EnhancedContextMenu } from './canvas/EnhancedContextMenu';
+import { CanvasInteractionHandler } from './canvas/CanvasInteractionHandler';
+import { CanvasOverlay } from './canvas/CanvasOverlay';
+import { GhostElement } from './canvas/GhostElement';
+import { NodeHighlight } from './canvas/NodeHighlight';
+import { useCircuitCanvasCursor } from './hooks/useCircuitCanvasCursor';
+import { CanvasEvents } from './canvas/CanvasEvents';
 
 interface CircuitCanvasProps {
   circuit: Circuit;
@@ -57,6 +60,7 @@ export function CircuitCanvas({
 }: CircuitCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
+  const { getCanvasCursor } = useCircuitCanvasCursor();
   
   // State for info panel (showing component properties)
   const [infoPanel, setInfoPanel] = useState<{
@@ -173,13 +177,13 @@ export function CircuitCanvas({
     }
   }, [circuit, infoPanel]);
 
-  // Get canvas event handlers
+  // Get canvas events
   const canvasEvents = CanvasEvents({
     circuit,
     canvasRef,
     connectionPreview,
     draggedWire,
-    isDragging, // Now correctly passes a boolean
+    isDragging,
     hoveredItem,
     isRunning,
     onAddComponent,
@@ -234,6 +238,16 @@ export function CircuitCanvas({
       });
     }
   };
+
+  // Get cursor style
+  const cursor = getCanvasCursor({
+    isDragging,
+    isConnecting: connectionPreview.isConnecting,
+    hoveredItem,
+    isRunning,
+    draggedWire: !!draggedWire,
+    selectedComponent
+  });
   
   return (
     <EnhancedContextMenu
@@ -247,31 +261,45 @@ export function CircuitCanvas({
       canUndo={canUndo}
       canRedo={canRedo}
     >
-      <div className="relative w-full h-full">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full"
-          onClick={handleCanvasClick}
-          onMouseDown={canvasEvents.handleMouseDownWithInteraction}
-          onMouseMove={canvasEvents.handleMouseMoveWithInteraction}
-          onMouseUp={canvasEvents.handleMouseUpWithInteraction}
-          onMouseLeave={canvasEvents.handleMouseUpWithInteraction}
-          onDoubleClick={handleDoubleClick}
-          style={{ cursor: canvasEvents.getCursor() }}
-        />
-        
-        {/* Component properties info panel */}
-        <InfoPanel 
-          show={infoPanel.show}
-          componentId={infoPanel.componentId}
-          position={infoPanel.position}
+      <CanvasInteractionHandler
+        circuit={circuit}
+        hoveredItem={hoveredItem}
+        hoveredNodeId={hoveredNodeId}
+        connectionPreview={connectionPreview}
+        isDragging={isDragging}
+        draggedWire={draggedWire}
+        handleCanvasClick={handleCanvasClick}
+        handleMouseDown={canvasEvents.handleMouseDownWithInteraction}
+        handleMouseMove={canvasEvents.handleMouseMoveWithInteraction}
+        handleMouseUp={canvasEvents.handleMouseUpWithInteraction}
+        handleDoubleClick={handleDoubleClick}
+        canvasRef={canvasRef}
+        selectedComponent={selectedComponent}
+        cursor={cursor}
+      >
+        <CanvasOverlay
+          infoPanel={infoPanel}
           circuit={circuit}
-          onClose={closeInfoPanel}
+          showVoltages={showVoltages}
+          isRunning={isRunning}
+          onCloseInfoPanel={closeInfoPanel}
+          wireStart={connectionPreview.connectionStart?.position || null}
+          tempWireEnd={connectionPreview.endPosition || null}
+          hoveredNodeId={hoveredNodeId}
+          placementFeedback={connectionPreview.placementFeedback}
         />
-        
-        {/* Voltage overlay */}
-        <VoltageOverlay show={showVoltages && isRunning} />
-      </div>
+
+        <GhostElement
+          position={connectionPreview.ghostPosition || null}
+          dragInfo={connectionPreview.paletteDragInfo}
+        />
+
+        <NodeHighlight
+          nodeId={hoveredNodeId}
+          wireStart={connectionPreview.connectionStart?.position || null}
+          simulationState={connectionPreview.simulationState}
+        />
+      </CanvasInteractionHandler>
     </EnhancedContextMenu>
   );
 }
