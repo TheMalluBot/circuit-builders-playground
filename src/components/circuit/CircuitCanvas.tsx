@@ -249,6 +249,19 @@ export function CircuitCanvas({
     selectedComponent
   });
   
+  // Extract the properties we need from connectionPreview
+  const wireStart = connectionPreview.connectionStart?.position || null;
+  const tempWireEnd = connectionPreview.currentMousePos || null;
+  
+  // We need to handle the drag and drop states separately as they don't exist on connectionPreview
+  const [ghostPosition, setGhostPosition] = useState<{x: number, y: number} | null>(null);
+  const [paletteDragInfo, setPaletteDragInfo] = useState<{
+    type: string;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
+  const [placementFeedback, setPlacementFeedback] = useState<{x: number, y: number} | null>(null);
+  
   return (
     <EnhancedContextMenu
       itemType={selectedItemType || null}
@@ -283,23 +296,24 @@ export function CircuitCanvas({
           showVoltages={showVoltages}
           isRunning={isRunning}
           onCloseInfoPanel={closeInfoPanel}
-          wireStart={connectionPreview.connectionStart?.position || null}
-          tempWireEnd={connectionPreview.endPosition || null}
+          wireStart={wireStart}
+          tempWireEnd={tempWireEnd}
           hoveredNodeId={hoveredNodeId}
-          placementFeedback={connectionPreview.placementFeedback}
+          placementFeedback={placementFeedback}
         />
 
         <GhostElement
-          position={connectionPreview.ghostPosition || null}
-          dragInfo={connectionPreview.paletteDragInfo}
+          position={ghostPosition}
+          dragInfo={paletteDragInfo}
         />
 
         <NodeHighlight
           nodeId={hoveredNodeId}
-          wireStart={connectionPreview.connectionStart?.position || null}
-          simulationState={connectionPreview.simulationState}
+          wireStart={wireStart}
+          simulationState={null} // We don't have access to simulationState here
         />
       </CanvasInteractionHandler>
     </EnhancedContextMenu>
   );
 }
+

@@ -14,10 +14,13 @@ interface NodeHighlightProps {
  */
 export const NodeHighlight: React.FC<NodeHighlightProps> = ({ 
   nodeId, 
-  wireStart, 
+  wireStart,
   simulationState 
 }) => {
-  if (!nodeId || wireStart || !simulationState) return null;
+  if (!nodeId || wireStart) return null;
+  
+  // If we don't have simulationState, we can't determine the position
+  if (!simulationState) return null;
   
   const nodePosition = getNodePositionFromId(nodeId, simulationState.components);
   
